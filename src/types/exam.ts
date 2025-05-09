@@ -44,8 +44,8 @@ export interface Question {
   subject_id: string | null;
   text: string;
   type: QuestionType;
-  options: any | null;
-  correct_answer: any | null;
+  options: string[] | null;
+  correct_answer: string | string[] | null;
   media_urls: string[] | null;
   difficulty: QuestionDifficulty;
   tags: string[] | null;
