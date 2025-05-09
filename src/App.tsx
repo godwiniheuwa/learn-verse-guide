@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import LoginPage from "./pages/auth/LoginPage";
@@ -27,7 +28,25 @@ const App = () => (
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Admin routes will be added here */}
+              {/* <Route path="/admin/*" element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminRoutes />
+                </ProtectedRoute>
+              } /> */}
+              
+              {/* Exam routes will be added here */}
+              {/* <Route path="/exams/create" element={
+                <ProtectedRoute requiredRole="examiner">
+                  <CreateExam />
+                </ProtectedRoute>
+              } /> */}
             </Route>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />

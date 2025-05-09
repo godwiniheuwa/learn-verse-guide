@@ -9,6 +9,95 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      exams: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          status: Database["public"]["Enums"]["exam_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["exam_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["exam_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          correct_answer: string | null
+          created_at: string
+          created_by: string
+          exam_id: string
+          id: string
+          options: Json | null
+          points: number | null
+          question_text: string
+          updated_at: string
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string
+          created_by: string
+          exam_id: string
+          id?: string
+          options?: Json | null
+          points?: number | null
+          question_text: string
+          updated_at?: string
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string
+          created_by?: string
+          exam_id?: string
+          id?: string
+          options?: Json | null
+          points?: number | null
+          question_text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           address: string | null
@@ -85,9 +174,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: string
+      }
     }
     Enums: {
+      exam_status: "draft" | "published" | "closed"
       user_role: "student" | "teacher" | "examiner" | "admin"
     }
     CompositeTypes: {
@@ -204,6 +297,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      exam_status: ["draft", "published", "closed"],
       user_role: ["student", "teacher", "examiner", "admin"],
     },
   },
