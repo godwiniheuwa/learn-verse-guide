@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { AlertMessage } from '@/components/ui/alert-message';
+import { supabase } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -26,6 +27,7 @@ const LoginPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [adminCreated, setAdminCreated] = useState(false);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -45,6 +47,36 @@ const LoginPage = () => {
       setSuccessMessage('Your password has been reset successfully. You can now log in with your new password.');
     }
     
+    // Try to create/activate admin account automatically
+    const createAdminAccount = async () => {
+      try {
+        const SUPABASE_URL = "https://lemshjwutppclhhboeae.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA";
+        
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/create-admin`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          console.log("Admin user created or activated:", data);
+          setAdminCreated(true);
+          setSuccessMessage(prev => 
+            (prev ? `${prev} ` : '') + 
+            'Admin account is ready. You can log in with admin@examprep.com and password Admin@123456'
+          );
+        }
+      } catch (error) {
+        console.error("Error creating admin:", error);
+      }
+    };
+    
+    createAdminAccount();
+    
     // Redirect if user is already logged in
     if (user) {
       navigate('/dashboard');
@@ -55,10 +87,33 @@ const LoginPage = () => {
     try {
       setIsSubmitting(true);
       setError(null);
+      
+      // Direct login with Supabase client for more control
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      
+      if (authError) {
+        throw new Error(authError.message);
+      }
+      
+      // Let the Auth context know about this sign in
       await login(data.email, data.password);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials and try again.');
+      console.error("Login error:", err);
+      
+      // More specific error messages
+      if (err.message.includes("Email not confirmed")) {
+        setError("Your email has not been confirmed. Please check your inbox for the activation link.");
+      } else if (err.message.includes("Invalid login credentials")) {
+        setError("Invalid email or password. Please try again.");
+      } else if (err.message.includes("not active")) {
+        setError("Your account is not active. Please check your email for the activation link or create an admin account.");
+      } else {
+        setError(err.message || 'Login failed. Please check your credentials and try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -80,7 +135,7 @@ const LoginPage = () => {
               title="Success"
               message={successMessage}
               autoHide={true}
-              hideAfter={8000}
+              hideAfter={10000}
               onHide={() => setSuccessMessage(null)}
             />
           )}
@@ -103,7 +158,12 @@ const LoginPage = () => {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} />
+                      <Input 
+                        type="email" 
+                        placeholder="you@example.com" 
+                        {...field} 
+                        defaultValue={adminCreated ? "admin@examprep.com" : ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -117,7 +177,12 @@ const LoginPage = () => {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        {...field}
+                        defaultValue={adminCreated ? "Admin@123456" : ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -146,6 +211,9 @@ const LoginPage = () => {
           </p>
           <Link to="/auth/forgot-password" className="text-xs text-center text-muted-foreground hover:underline">
             Forgot your password?
+          </Link>
+          <Link to="/auth/create-admin" className="text-xs text-center text-primary hover:underline">
+            Create/Activate Admin Account
           </Link>
         </CardFooter>
       </Card>

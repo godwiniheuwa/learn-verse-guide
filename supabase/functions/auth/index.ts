@@ -46,19 +46,66 @@ async function createAdminUserIfNotExists() {
   try {
     const adminEmail = "admin@examprep.com";
     
-    // Check if admin user already exists
-    const { data: existingUser } = await supabase
+    console.log("Checking for admin user existence...");
+    
+    // First, check if admin user exists in auth.users
+    const { data: authUser, error: authCheckError } = await supabase.auth.admin.getUserByEmail(adminEmail);
+    
+    let authUserId: string | null = null;
+    
+    if (authCheckError) {
+      console.error("Error checking auth user:", authCheckError);
+    }
+    
+    if (!authUser) {
+      console.log("Admin auth user does not exist, creating...");
+      // Create admin in auth.users
+      const { data: newAuthUser, error: authCreateError } = await supabase.auth.admin.createUser({
+        email: adminEmail,
+        password: "Admin@123456",
+        email_confirm: true,
+      });
+      
+      if (authCreateError) {
+        console.error("Error creating auth user:", authCreateError);
+        return null;
+      }
+      
+      if (newAuthUser?.user?.id) {
+        authUserId = newAuthUser.user.id;
+        console.log("Created auth user with ID:", authUserId);
+      } else {
+        console.error("Failed to create auth user: No user ID returned");
+        return null;
+      }
+    } else {
+      authUserId = authUser.user.id;
+      console.log("Admin auth user exists with ID:", authUserId);
+    }
+    
+    if (!authUserId) {
+      console.error("No auth user ID available");
+      return null;
+    }
+    
+    // Now check if admin user exists in public.users
+    const { data: existingUser, error: checkError } = await supabase
       .from('users')
       .select('id, email, is_active')
       .eq('email', adminEmail)
       .single();
     
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      console.error("Error checking for admin in users table:", checkError);
+      return null;
+    }
+    
     if (existingUser) {
-      console.log("Admin user already exists, checking if active");
+      console.log("Admin user exists in users table, checking if active...");
       
       // If admin exists but is not active, activate it
       if (!existingUser.is_active) {
-        console.log("Activating existing admin user");
+        console.log("Activating existing admin user...");
         const { error: updateError } = await supabase
           .from('users')
           .update({ is_active: true })
@@ -66,50 +113,44 @@ async function createAdminUserIfNotExists() {
           
         if (updateError) {
           console.error("Error activating admin user:", updateError);
+          return null;
         } else {
           console.log("Admin user activated successfully");
         }
+      } else {
+        console.log("Admin user is already active");
       }
       
       return existingUser.id;
     } else {
-      // Create user in Supabase auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: adminEmail,
-        password: "Admin@123456",
-        email_confirm: true,
-      });
-
-      if (authError) {
-        console.error("Error creating admin auth user:", authError);
-        return null;
-      }
-
-      if (!authData || !authData.user || !authData.user.id) {
-        console.error("Failed to create admin: No user ID returned");
-        return null;
-      }
-
+      console.log("Admin user does not exist in users table, creating...");
+      
       // Insert admin user into users table
-      const { error: insertError } = await supabase
+      const { data: insertData, error: insertError } = await supabase
         .from('users')
         .insert({
-          id: authData.user.id,
+          id: authUserId,
           email: adminEmail,
           name: "Admin User",
           username: "admin",
           role: "admin",
-          is_active: true,  // Ensure admin is active by default
+          is_active: true,
           password_hash: 'managed_by_supabase',
-        });
+        })
+        .select();
 
       if (insertError) {
         console.error("Error inserting admin user:", insertError);
         return null;
       }
+      
+      if (!insertData || insertData.length === 0) {
+        console.error("Failed to create admin user in users table");
+        return null;
+      }
 
-      console.log("Admin user created successfully");
-      return authData.user.id;
+      console.log("Admin user created successfully in users table");
+      return authUserId;
     }
   } catch (error) {
     console.error("Error in createAdminUserIfNotExists:", error);
@@ -164,9 +205,12 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const path = url.pathname.split('/').pop();
+    
+    console.log(`Handling request for path: ${path}, method: ${req.method}`);
 
     // Handle admin user creation (for development purposes)
     if (req.method === "GET" && path === "create-admin") {
+      console.log("Attempting to create/activate admin user...");
       const adminId = await createAdminUserIfNotExists();
       
       if (adminId) {
@@ -341,6 +385,7 @@ serve(async (req) => {
 
     // Handle login
     if (req.method === "POST" && path === "login") {
+      console.log("Processing login request...");
       const { email, password } = await req.json();
 
       // Check if user is active
@@ -351,6 +396,7 @@ serve(async (req) => {
         .maybeSingle();
 
       if (userError) {
+        console.error(`User check error: ${userError.message}`);
         throw new Error(`User check error: ${userError.message}`);
       }
 
@@ -369,18 +415,21 @@ serve(async (req) => {
       }
 
       // Attempt to sign in
+      console.log("Attempting to sign in with Supabase auth...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Login error:", error);
         return new Response(
           JSON.stringify({ error: "Invalid credentials" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
         );
       }
 
+      console.log("Login successful");
       return new Response(
         JSON.stringify({ user: data.user, session: data.session }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }

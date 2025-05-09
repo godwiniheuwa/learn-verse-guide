@@ -17,7 +17,10 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
       .eq('id', userId)
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching user data:', error);
+      throw error;
+    }
     
     if (data) {
       // Transform the data to match our User type
@@ -42,31 +45,37 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
  */
 export const loginWithEmail = async (email: string, password: string) => {
   try {
-    // Use our custom auth endpoint to verify active status before login
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ email, password }),
+    // First, check if the user exists and is active
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('is_active')
+      .eq('email', email)
+      .maybeSingle();
+    
+    if (userError) {
+      console.error('Error checking user:', userError);
+    }
+    
+    if (!userData) {
+      throw new Error("Account not found. Please sign up first.");
+    }
+    
+    if (!userData.is_active) {
+      throw new Error("Account not active. Please check your email for the activation link.");
+    }
+    
+    // Now try to sign in with Supabase auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
     
-    const result = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(result.error || 'Login failed');
+    if (error) {
+      console.error('Login error:', error);
+      throw error;
     }
     
-    // If successful, set session in Supabase
-    if (result.session) {
-      await supabase.auth.setSession({
-        access_token: result.session.access_token,
-        refresh_token: result.session.refresh_token,
-      });
-      
-      return result;
-    }
+    return data;
   } catch (error: any) {
     console.error('Error logging in:', error);
     throw error;

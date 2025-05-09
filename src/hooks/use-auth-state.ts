@@ -9,19 +9,28 @@ export const useAuthState = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check for current user on load
-    checkUser();
-
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, _) => {
-        if (event === 'SIGNED_IN') {
-          checkUser();
-        } else if (event === 'SIGNED_OUT') {
+      async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
+        
+        if (session?.user?.id) {
+          // Only update user if session exists
+          try {
+            const userData = await fetchUserData(session.user.id);
+            setUser(userData);
+          } catch (error) {
+            console.error("Error fetching user data on auth change:", error);
+            setUser(null);
+          }
+        } else {
           setUser(null);
         }
       }
     );
+
+    // THEN check for existing session
+    checkUser();
 
     return () => {
       subscription.unsubscribe();
@@ -36,13 +45,16 @@ export const useAuthState = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user?.id) {
+        console.log("Found existing session, fetching user data...");
         const userData = await fetchUserData(session.user.id);
-        if (userData) {
-          setUser(userData);
-        }
+        setUser(userData);
+      } else {
+        console.log("No active session found");
+        setUser(null);
       }
     } catch (error) {
       console.error('Error checking user:', error);
+      setUser(null);
     } finally {
       setLoading(false);
     }

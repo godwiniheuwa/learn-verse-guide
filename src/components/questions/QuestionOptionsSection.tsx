@@ -1,5 +1,4 @@
 
-// Fixing QuestionOptionsSection.tsx to handle proper types
 import { Controller, useFieldArray, Control } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +31,7 @@ export const QuestionOptionsSection = ({ control }: QuestionOptionsSectionProps)
         {fields.map((field, index) => (
           <div key={field.id} className="flex gap-2">
             <Controller
-              name={`options.${index}.value` as const}
+              name={`options.${index}.value`}
               control={control}
               render={({ field }) => (
                 <Input

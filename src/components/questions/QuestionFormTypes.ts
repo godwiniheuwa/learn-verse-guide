@@ -8,9 +8,9 @@ export const questionSchema = z.object({
   type: z.enum(["MCQ", "theory"]),
   subject_id: z.string().nullable().optional(),
   difficulty: z.enum(["easy", "medium", "hard"]),
-  options: z.array(z.string()),
+  options: z.array(z.object({ value: z.string() })),
   correct_answer: z.union([z.string(), z.array(z.string())]).optional(),
-  tags: z.array(z.string()),
+  tags: z.array(z.object({ value: z.string() })),
   points: z.number().optional(),
 });
 
@@ -19,9 +19,9 @@ export type FormValues = {
   type: QuestionType;
   subject_id: string | null;
   difficulty: QuestionDifficulty;
-  options: string[];
+  options: { value: string }[];
   correct_answer?: string | string[];
-  tags: string[];
+  tags: { value: string }[];
   points?: number;
 };
 
@@ -31,8 +31,8 @@ export interface QuestionFormData {
   type: QuestionType;
   subject_id: string | null;
   difficulty: QuestionDifficulty;
-  options?: string[];
+  options?: { value: string }[];
   correct_answer?: string | string[];
-  tags?: string[];
+  tags?: { value: string }[];
   points?: number;
 }

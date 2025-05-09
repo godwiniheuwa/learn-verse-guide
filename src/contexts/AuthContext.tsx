@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { AuthContextType } from '@/types/auth';
 import { useAuthState } from '@/hooks/use-auth-state';
@@ -23,20 +23,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading, checkUser } = useAuthState();
   const { toast } = useToast();
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for current user immediately
+    checkUser();
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      await loginWithEmail(email, password);
+      setAuthError(null);
+      const result = await loginWithEmail(email, password);
       await checkUser();
       
       toast({
         title: 'Login successful',
         description: `Welcome back${user ? ', ' + user.name : ''}!`,
       });
+      
+      return result;
     } catch (error: any) {
+      const errorMessage = error.message || 'Check your credentials and try again.';
+      setAuthError(errorMessage);
+      
       toast({
         title: 'Login failed',
-        description: error.message || 'Check your credentials and try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
       throw error;
@@ -45,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (name: string, email: string, username: string, password: string) => {
     try {
+      setAuthError(null);
       const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/signup`, {
         method: 'POST',
         headers: {
@@ -68,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return result;
     } catch (error: any) {
       console.error('Signup error details:', error);
+      setAuthError(error.message || 'Unable to create account. Try again later.');
       
       toast({
         title: 'Signup failed',
@@ -80,6 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const forgotPassword = async (email: string) => {
     try {
+      setAuthError(null);
       // Use the constants instead of accessing protected properties
       const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/forgot-password`, {
         method: 'POST',
@@ -103,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return result;
     } catch (error: any) {
+      setAuthError(error.message || 'Unable to process your request. Try again later.');
       toast({
         title: 'Request failed',
         description: error.message || 'Unable to process your request. Try again later.',
@@ -114,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (token: string, password: string) => {
     try {
+      setAuthError(null);
       // Use the constants instead of accessing protected properties
       const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/reset-password`, {
         method: 'POST',
@@ -137,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return result;
     } catch (error: any) {
+      setAuthError(error.message || 'Unable to reset password. Try again later.');
       toast({
         title: 'Reset failed',
         description: error.message || 'Unable to reset password. Try again later.',
@@ -148,13 +166,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      setAuthError(null);
       await signOut();
+      
+      // Force refresh the auth state
+      await checkUser();
       
       toast({
         title: 'Logged out',
         description: 'You have been logged out successfully.',
       });
     } catch (error: any) {
+      setAuthError(error.message || 'Failed to log out. Try again.');
       toast({
         title: 'Error',
         description: 'Failed to log out. Try again.',
@@ -171,7 +194,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signup, 
       logout,
       forgotPassword,
-      resetPassword
+      resetPassword,
+      authError
     }}>
       {children}
     </AuthContext.Provider>
