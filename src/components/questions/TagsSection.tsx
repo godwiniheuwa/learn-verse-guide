@@ -11,7 +11,7 @@ interface TagsSectionProps {
 
 export const TagsSection = ({ control }: TagsSectionProps) => {
   const { fields: tagFields, append: appendTag, remove: removeTag } = 
-    useFieldArray({ control, name: "tags" });
+    useFieldArray<string>({ control, name: "tags" });
 
   return (
     <div>

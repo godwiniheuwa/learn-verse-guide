@@ -13,7 +13,8 @@ interface QuestionOptionsSectionProps {
 
 export const QuestionOptionsSection = ({ control }: QuestionOptionsSectionProps) => {
   const { fields: optionFields, append: appendOption, remove: removeOption } = 
-    useFieldArray({ control, name: "options" });
+    useFieldArray<string>({ control, name: "options" });
+
 
   return (
     <>
