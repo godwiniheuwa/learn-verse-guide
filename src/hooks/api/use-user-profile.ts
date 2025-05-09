@@ -86,16 +86,28 @@ export const useUserProfile = () => {
       // Reset progress
       setUploadProgress(0);
 
+      // Create upload options without onProgress
+      const options = {
+        cacheControl: '3600',
+        upsert: true
+      };
+
+      // Track progress manually using an XMLHttpRequest
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percent = (event.loaded / event.total) * 100;
+          setUploadProgress(Math.round(percent));
+        }
+      });
+      
+      // Upload using standard method
       const { error: uploadError, data } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true,
-          onProgress: (progress) => {
-            const percent = (progress.loaded / progress.total) * 100;
-            setUploadProgress(Math.round(percent));
-          },
-        });
+        .upload(filePath, file, options);
 
       if (uploadError) {
         throw uploadError;

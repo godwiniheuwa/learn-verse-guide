@@ -28,12 +28,13 @@ export default function ProfilePage() {
       </div>
 
       {!user?.isActive && (
-        <AlertMessage
-          type="warning"
-          title="Account not activated"
-          message="Your account is not fully activated yet. Some features might be limited."
-          className="mb-6"
-        />
+        <div className="mb-6">
+          <AlertMessage
+            type="warning"
+            title="Account not activated"
+            message="Your account is not fully activated yet. Some features might be limited."
+          />
+        </div>
       )}
 
       <div className="bg-card rounded-lg border p-6 shadow-sm">

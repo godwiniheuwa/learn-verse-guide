@@ -14,6 +14,7 @@ interface AlertMessageProps {
   autoHide?: boolean;
   hideAfter?: number;
   onHide?: () => void;
+  className?: string; // Added className property to the interface
 }
 
 export function AlertMessage({
@@ -23,7 +24,8 @@ export function AlertMessage({
   show = true,
   autoHide = false,
   hideAfter = 5000,
-  onHide
+  onHide,
+  className
 }: AlertMessageProps) {
   const [visible, setVisible] = useState(show);
 
@@ -59,7 +61,7 @@ export function AlertMessage({
   };
 
   return (
-    <Alert className={cn('mb-4', alertClasses[type])}>
+    <Alert className={cn('mb-4', alertClasses[type], className)}>
       <div className="flex items-start">
         {icons[type]}
         <div className="ml-3">
