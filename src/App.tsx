@@ -9,6 +9,9 @@ import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import LoginPage from "./pages/auth/LoginPage";
 import SignupPage from "./pages/auth/SignupPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import ActivatePage from "./pages/auth/ActivatePage";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +31,9 @@ const App = () => (
             </Route>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth/activate" element={<ActivatePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

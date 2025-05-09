@@ -18,6 +18,8 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,39 +94,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // Sign in with Supabase auth
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Use our custom auth endpoint to verify active status before login
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+        },
+        body: JSON.stringify({ email, password }),
       });
       
-      if (error) throw error;
+      const result = await response.json();
       
-      // Fetch user data from our custom users table
-      if (data.user) {
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-          
-        if (userError) throw userError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Login failed');
+      }
+      
+      // If successful, set session in Supabase
+      if (result.session) {
+        await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        });
         
-        // Transform the data to match our User type
-        const transformedUser: User = {
-          id: userData.id,
-          email: userData.email,
-          name: userData.name,
-          username: userData.username,
-          role: userData.role,
-          isActive: userData.is_active
-        };
-        
-        setUser(transformedUser);
+        // Check user to update state
+        await checkUser();
         
         toast({
           title: 'Login successful',
-          description: `Welcome back, ${userData.name}!`,
+          description: `Welcome back${user ? ', ' + user.name : ''}!`,
         });
       }
     } catch (error: any) {
@@ -134,6 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message || 'Check your credentials and try again.',
         variant: 'destructive',
       });
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -143,36 +142,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // Create user in Supabase auth
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      // Use our custom auth endpoint for signup
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+        },
+        body: JSON.stringify({ name, email, username, password }),
       });
       
-      if (error) throw error;
+      const result = await response.json();
       
-      if (data.user) {
-        // Insert user data into our custom users table
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert([
-            { 
-              id: data.user.id,
-              name,
-              username,
-              email,
-              password_hash: 'hashed_in_supabase', // Supabase handles the actual password hashing
-              role: 'student'
-            }
-          ]);
-          
-        if (insertError) throw insertError;
-        
-        toast({
-          title: 'Account created',
-          description: 'Your account has been created successfully. Please verify your email.',
-        });
+      if (!response.ok) {
+        throw new Error(result.error || 'Signup failed');
       }
+      
+      toast({
+        title: 'Account created',
+        description: result.message || 'Please check your email to activate your account.',
+      });
+      
+      return result;
     } catch (error: any) {
       console.error('Error signing up:', error);
       toast({
@@ -180,6 +171,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message || 'Unable to create account. Try again later.',
         variant: 'destructive',
       });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const forgotPassword = async (email: string) => {
+    try {
+      setLoading(true);
+      
+      // Use our custom auth endpoint for forgot password
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok && result.error) {
+        throw new Error(result.error);
+      }
+      
+      toast({
+        title: 'Password reset email sent',
+        description: result.message || 'If your email is registered, you will receive a password reset link.',
+      });
+      
+      return result;
+    } catch (error: any) {
+      console.error('Error requesting password reset:', error);
+      toast({
+        title: 'Request failed',
+        description: error.message || 'Unable to process your request. Try again later.',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (token: string, password: string) => {
+    try {
+      setLoading(true);
+      
+      // Use our custom auth endpoint for password reset
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+        },
+        body: JSON.stringify({ token, password }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Password reset failed');
+      }
+      
+      toast({
+        title: 'Password reset successful',
+        description: result.message || 'You can now login with your new password.',
+      });
+      
+      return result;
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: 'Reset failed',
+        description: error.message || 'Unable to reset password. Try again later.',
+        variant: 'destructive',
+      });
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -204,7 +274,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      signup, 
+      logout,
+      forgotPassword,
+      resetPassword
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { AlertMessage } from '@/components/ui/alert-message';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -19,9 +20,12 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -31,13 +35,30 @@ const LoginPage = () => {
     },
   });
 
+  useEffect(() => {
+    // Check for query parameters to show appropriate messages
+    const params = new URLSearchParams(location.search);
+    
+    if (params.get('activated') === 'true') {
+      setSuccessMessage('Your account has been activated successfully. You can now log in.');
+    } else if (params.get('reset') === 'success') {
+      setSuccessMessage('Your password has been reset successfully. You can now log in with your new password.');
+    }
+    
+    // Redirect if user is already logged in
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [location.search, user, navigate]);
+
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
+      setError(null);
       await login(data.email, data.password);
       navigate('/dashboard');
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -53,6 +74,26 @@ const LoginPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {successMessage && (
+            <AlertMessage
+              type="success"
+              title="Success"
+              message={successMessage}
+              autoHide={true}
+              hideAfter={8000}
+              onHide={() => setSuccessMessage(null)}
+            />
+          )}
+          
+          {error && (
+            <AlertMessage
+              type="error"
+              title="Error"
+              message={error}
+              onHide={() => setError(null)}
+            />
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -103,7 +144,7 @@ const LoginPage = () => {
               Sign up here
             </Link>
           </p>
-          <Link to="/forgot-password" className="text-xs text-center text-muted-foreground hover:underline">
+          <Link to="/auth/forgot-password" className="text-xs text-center text-muted-foreground hover:underline">
             Forgot your password?
           </Link>
         </CardFooter>
