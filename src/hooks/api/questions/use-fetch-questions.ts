@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Question } from '@/types/exam';
+import { QuestionDBRecord } from './types';
 
 export const useFetchQuestions = (subjectId?: string, canView: boolean = true) => {
   const fetchQuestions = async (): Promise<Question[]> => {
@@ -26,16 +27,16 @@ export const useFetchQuestions = (subjectId?: string, canView: boolean = true) =
     }
 
     // Map database response to our frontend model
-    return (data || []).map(item => ({
+    return (data || []).map((item: QuestionDBRecord) => ({
       id: item.id,
-      subject_id: item.subject_id,
+      subject_id: item.subject_id || null,
       text: item.question_text,
-      type: item.type,
-      options: item.options,
+      type: item.type || 'MCQ', // Provide default if missing
+      options: Array.isArray(item.options) ? item.options : null,
       correct_answer: item.correct_answer,
-      media_urls: item.media_urls,
-      difficulty: item.difficulty,
-      tags: item.tags,
+      media_urls: item.media_urls || null,
+      difficulty: item.difficulty || 'medium', // Provide default if missing
+      tags: item.tags || null,
       created_at: item.created_at,
       updated_at: item.updated_at,
       created_by: item.created_by
@@ -58,20 +59,22 @@ export const useFetchQuestions = (subjectId?: string, canView: boolean = true) =
       throw error;
     }
 
+    const item = data as QuestionDBRecord;
+    
     // Map database response to our frontend model
     return {
-      id: data.id,
-      subject_id: data.subject_id,
-      text: data.question_text,
-      type: data.type,
-      options: data.options,
-      correct_answer: data.correct_answer,
-      media_urls: data.media_urls,
-      difficulty: data.difficulty,
-      tags: data.tags,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      created_by: data.created_by
+      id: item.id,
+      subject_id: item.subject_id || null,
+      text: item.question_text,
+      type: item.type || 'MCQ', // Provide default if missing
+      options: Array.isArray(item.options) ? item.options : null,
+      correct_answer: item.correct_answer,
+      media_urls: item.media_urls || null,
+      difficulty: item.difficulty || 'medium', // Provide default if missing
+      tags: item.tags || null,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      created_by: item.created_by
     } as Question;
   };
   

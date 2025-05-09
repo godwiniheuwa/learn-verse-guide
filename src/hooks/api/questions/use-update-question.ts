@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/types/exam';
-import { UpdateQuestionData } from './types';
+import { UpdateQuestionData, QuestionDBRecord } from './types';
 
 export const useUpdateQuestion = (canUpdate: boolean = true) => {
   const queryClient = useQueryClient();
@@ -18,14 +18,19 @@ export const useUpdateQuestion = (canUpdate: boolean = true) => {
     
     // Map our frontend model to database schema
     const dbUpdates: any = {};
-    if (updates.text) dbUpdates.question_text = updates.text;
+    if (updates.text !== undefined) dbUpdates.question_text = updates.text;
     if (updates.type !== undefined) dbUpdates.type = updates.type;
     if (updates.options !== undefined) dbUpdates.options = updates.options;
-    if (updates.correct_answer !== undefined) dbUpdates.correct_answer = updates.correct_answer;
+    if (updates.correct_answer !== undefined) {
+      dbUpdates.correct_answer = Array.isArray(updates.correct_answer) 
+        ? JSON.stringify(updates.correct_answer) 
+        : updates.correct_answer;
+    }
     if (updates.media_urls !== undefined) dbUpdates.media_urls = updates.media_urls;
     if (updates.difficulty !== undefined) dbUpdates.difficulty = updates.difficulty;
     if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
     if (updates.subject_id !== undefined) dbUpdates.subject_id = updates.subject_id;
+    if (updates.points !== undefined) dbUpdates.points = updates.points;
 
     const { data, error } = await supabase
       .from('questions')
@@ -40,19 +45,20 @@ export const useUpdateQuestion = (canUpdate: boolean = true) => {
     }
 
     // Map database response to our frontend model
+    const item = data as QuestionDBRecord;
     return {
-      id: data.id,
-      subject_id: data.subject_id,
-      text: data.question_text,
-      type: data.type,
-      options: data.options,
-      correct_answer: data.correct_answer,
-      media_urls: data.media_urls,
-      difficulty: data.difficulty,
-      tags: data.tags,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      created_by: data.created_by
+      id: item.id,
+      subject_id: item.subject_id || null,
+      text: item.question_text,
+      type: item.type || 'MCQ', // Provide default if missing
+      options: Array.isArray(item.options) ? item.options : null,
+      correct_answer: item.correct_answer,
+      media_urls: item.media_urls || null,
+      difficulty: item.difficulty || 'medium', // Provide default if missing
+      tags: item.tags || null,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      created_by: item.created_by
     } as Question;
   };
 
