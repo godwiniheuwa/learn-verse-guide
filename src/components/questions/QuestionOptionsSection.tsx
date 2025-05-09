@@ -22,7 +22,7 @@ export const QuestionOptionsSection = ({ control }: QuestionOptionsSectionProps)
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => append("" as any)}
+          onClick={() => append({ value: "" } as any)}
         >
           <PlusIcon className="h-4 w-4 mr-2" />
           Add Option
@@ -32,7 +32,7 @@ export const QuestionOptionsSection = ({ control }: QuestionOptionsSectionProps)
         {fields.map((field, index) => (
           <div key={field.id} className="flex gap-2">
             <Controller
-              name={`options.${index}`}
+              name={`options.${index}` as const}
               control={control}
               render={({ field }) => (
                 <Input
