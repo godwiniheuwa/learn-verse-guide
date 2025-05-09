@@ -4,28 +4,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/middleware/role-guard';
 import { useToast } from '@/hooks/use-toast';
-
-export type Question = {
-  id: string;
-  exam_id: string;
-  question_text: string;
-  options: any | null;
-  correct_answer: string | null;
-  points: number | null;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-};
+import { Question, QuestionType, QuestionDifficulty } from '@/types/exam';
 
 export type NewQuestion = {
-  exam_id: string;
-  question_text: string;
-  options?: any;
-  correct_answer?: string;
-  points?: number;
+  subject_id?: string | null;
+  text: string;
+  type: QuestionType;
+  options?: string[] | null;
+  correct_answer?: string | string[] | null;
+  media_urls?: string[] | null;
+  difficulty: QuestionDifficulty;
+  tags?: string[] | null;
 };
 
-export const useQuestions = (examId?: string) => {
+export const useQuestions = (subjectId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -36,15 +28,20 @@ export const useQuestions = (examId?: string) => {
   const canDelete = hasPermission(user, 'questions', 'delete');
 
   const fetchQuestions = async (): Promise<Question[]> => {
-    if (!canView || !examId) {
+    if (!canView) {
       return [];
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('questions')
       .select('*')
-      .eq('exam_id', examId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false });
+
+    if (subjectId) {
+      query = query.eq('subject_id', subjectId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching questions', error);
@@ -134,9 +131,9 @@ export const useQuestions = (examId?: string) => {
   // Query hooks
   const useAllQuestions = () => {
     return useQuery({
-      queryKey: ['questions', examId],
+      queryKey: ['questions', subjectId],
       queryFn: fetchQuestions,
-      enabled: !!examId && !!user && canView
+      enabled: !!user && canView
     });
   };
 
@@ -153,7 +150,8 @@ export const useQuestions = (examId?: string) => {
     return useMutation({
       mutationFn: createQuestion,
       onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: ['questions', data.exam_id] });
+        queryClient.invalidateQueries({ queryKey: ['questions'] });
+        queryClient.invalidateQueries({ queryKey: ['questions', data.subject_id] });
         toast({
           title: "Question created",
           description: "Your question has been created successfully."
@@ -173,7 +171,8 @@ export const useQuestions = (examId?: string) => {
     return useMutation({
       mutationFn: updateQuestion,
       onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: ['questions', data.exam_id] });
+        queryClient.invalidateQueries({ queryKey: ['questions'] });
+        queryClient.invalidateQueries({ queryKey: ['questions', data.subject_id] });
         queryClient.invalidateQueries({ queryKey: ['questions', data.id] });
         toast({
           title: "Question updated",
@@ -194,8 +193,9 @@ export const useQuestions = (examId?: string) => {
     return useMutation({
       mutationFn: deleteQuestion,
       onSuccess: () => {
-        if (examId) {
-          queryClient.invalidateQueries({ queryKey: ['questions', examId] });
+        queryClient.invalidateQueries({ queryKey: ['questions'] });
+        if (subjectId) {
+          queryClient.invalidateQueries({ queryKey: ['questions', subjectId] });
         }
         toast({
           title: "Question deleted",

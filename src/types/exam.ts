@@ -35,3 +35,25 @@ export interface ExamYearWithRelations extends ExamYear {
 export interface SubjectWithRelations extends Subject {
   exam_year?: ExamYear;
 }
+
+export type QuestionType = 'MCQ' | 'theory';
+export type QuestionDifficulty = 'easy' | 'medium' | 'hard';
+
+export interface Question {
+  id: string;
+  subject_id: string | null;
+  text: string;
+  type: QuestionType;
+  options: any | null;
+  correct_answer: any | null;
+  media_urls: string[] | null;
+  difficulty: QuestionDifficulty;
+  tags: string[] | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+export interface QuestionWithRelations extends Question {
+  subject?: Subject;
+}

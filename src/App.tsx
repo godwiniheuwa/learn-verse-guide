@@ -16,6 +16,9 @@ import ActivatePage from "./pages/auth/ActivatePage";
 import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
+import QuestionsListPage from "./pages/questions/QuestionsListPage";
+import QuestionFormPage from "./pages/questions/QuestionFormPage";
+import QuestionDetailPage from "./pages/questions/QuestionDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +40,28 @@ const App = () => (
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              } />
+              
+              {/* Question routes */}
+              <Route path="/questions" element={
+                <ProtectedRoute>
+                  <QuestionsListPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/questions/new" element={
+                <ProtectedRoute>
+                  <QuestionFormPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/questions/:id" element={
+                <ProtectedRoute>
+                  <QuestionDetailPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/questions/:id/edit" element={
+                <ProtectedRoute>
+                  <QuestionFormPage />
                 </ProtectedRoute>
               } />
               
