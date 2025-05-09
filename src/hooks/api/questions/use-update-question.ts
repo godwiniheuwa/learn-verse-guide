@@ -1,84 +1,74 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Question } from '@/types/exam';
-import { UpdateQuestionData, QuestionDBRecord } from './types';
+import { UpdateQuestionData, QuestionDBUpdate } from './types';
+
+// Helper function to convert frontend model to DB model for update
+const mapUpdateToDbRecord = (question: UpdateQuestionData): QuestionDBUpdate => {
+  const dbUpdate: QuestionDBUpdate = { id: question.id };
+
+  if (question.text !== undefined) dbUpdate.question_text = question.text;
+  if (question.subject_id !== undefined) dbUpdate.subject_id = question.subject_id;
+  if (question.exam_id !== undefined) dbUpdate.exam_id = question.exam_id;
+  if (question.type !== undefined) dbUpdate.type = question.type;
+  if (question.options !== undefined) dbUpdate.options = question.options;
+  if (question.correct_answer !== undefined) {
+    dbUpdate.correct_answer = Array.isArray(question.correct_answer) 
+      ? JSON.stringify(question.correct_answer) 
+      : question.correct_answer;
+  }
+  if (question.points !== undefined) dbUpdate.points = question.points;
+  if (question.media_urls !== undefined) dbUpdate.media_urls = question.media_urls;
+  if (question.difficulty !== undefined) dbUpdate.difficulty = question.difficulty;
+  if (question.tags !== undefined) dbUpdate.tags = question.tags;
+
+  return dbUpdate;
+};
 
 export const useUpdateQuestion = (canUpdate: boolean = true) => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-  
-  const updateQuestion = async (questionData: UpdateQuestionData): Promise<Question> => {
+
+  const updateQuestion = async (question: UpdateQuestionData) => {
     if (!canUpdate) {
       throw new Error("You don't have permission to update questions");
     }
 
-    const { id, ...updates } = questionData;
-    
-    // Map our frontend model to database schema
-    const dbUpdates: any = {};
-    if (updates.text !== undefined) dbUpdates.question_text = updates.text;
-    if (updates.type !== undefined) dbUpdates.type = updates.type;
-    if (updates.options !== undefined) dbUpdates.options = updates.options;
-    if (updates.correct_answer !== undefined) {
-      dbUpdates.correct_answer = Array.isArray(updates.correct_answer) 
-        ? JSON.stringify(updates.correct_answer) 
-        : updates.correct_answer;
-    }
-    if (updates.media_urls !== undefined) dbUpdates.media_urls = updates.media_urls;
-    if (updates.difficulty !== undefined) dbUpdates.difficulty = updates.difficulty;
-    if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
-    if (updates.subject_id !== undefined) dbUpdates.subject_id = updates.subject_id;
-    if (updates.points !== undefined) dbUpdates.points = updates.points;
+    const dbUpdate = mapUpdateToDbRecord(question);
+    const { id, ...updateData } = dbUpdate;
 
     const { data, error } = await supabase
       .from('questions')
-      .update(dbUpdates)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
 
     if (error) {
-      console.error(`Error updating question ${id}`, error);
+      console.error('Error updating question:', error);
       throw error;
     }
 
-    // Map database response to our frontend model
-    const item = data as QuestionDBRecord;
     return {
-      id: item.id,
-      subject_id: item.subject_id || null,
-      text: item.question_text,
-      type: item.type || 'MCQ', // Provide default if missing
-      options: Array.isArray(item.options) ? item.options : null,
-      correct_answer: item.correct_answer,
-      media_urls: item.media_urls || null,
-      difficulty: item.difficulty || 'medium', // Provide default if missing
-      tags: item.tags || null,
-      created_at: item.created_at,
-      updated_at: item.updated_at,
-      created_by: item.created_by
-    } as Question;
+      id: data.id,
+      subject_id: data.subject_id || null,
+      text: data.question_text,
+      type: data.type || 'MCQ',
+      options: Array.isArray(data.options) ? data.options : null,
+      correct_answer: data.correct_answer,
+      media_urls: data.media_urls || null,
+      difficulty: data.difficulty || 'medium',
+      tags: data.tags || null,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      created_by: data.created_by
+    };
   };
 
   return useMutation({
     mutationFn: updateQuestion,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
-      queryClient.invalidateQueries({ queryKey: ['questions', data.subject_id] });
       queryClient.invalidateQueries({ queryKey: ['questions', data.id] });
-      toast({
-        title: "Question updated",
-        description: "Your question has been updated successfully."
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to update question",
-        description: error.message,
-        variant: "destructive"
-      });
     }
   });
 };

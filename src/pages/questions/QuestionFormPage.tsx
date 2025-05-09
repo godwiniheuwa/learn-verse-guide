@@ -238,7 +238,7 @@ const QuestionFormPage = () => {
                       <FormLabel>Subject</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value || undefined}
+                        defaultValue={field.value || ""}
                       >
                         <FormControl>
                           <SelectTrigger>

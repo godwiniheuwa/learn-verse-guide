@@ -1,35 +1,36 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Question } from '@/types/exam';
-import { NewQuestion, QuestionDBRecord } from './types';
+import { NewQuestion, QuestionDBInsert } from './types';
+
+// Helper function to convert frontend model to DB model
+const mapQuestionToDbRecord = (question: NewQuestion & { created_by: string }): QuestionDBInsert => {
+  return {
+    question_text: question.text,
+    exam_id: question.exam_id || null,
+    subject_id: question.subject_id || null,
+    type: question.type,
+    options: question.options || null,
+    correct_answer: Array.isArray(question.correct_answer) 
+      ? JSON.stringify(question.correct_answer) 
+      : question.correct_answer || null,
+    points: question.points || 1,
+    media_urls: question.media_urls || null,
+    difficulty: question.difficulty,
+    tags: question.tags || null,
+    created_by: question.created_by
+  };
+};
 
 export const useCreateQuestion = (canCreate: boolean = true) => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-  
-  const createQuestion = async (question: NewQuestion & { created_by: string }): Promise<Question> => {
+
+  const createQuestion = async (question: NewQuestion & { created_by: string }) => {
     if (!canCreate) {
       throw new Error("You don't have permission to create questions");
     }
 
-    // Map our frontend model to database schema
-    const dbQuestion = {
-      subject_id: question.subject_id || null,
-      exam_id: question.exam_id || null, // Use exam_id if provided, otherwise null
-      question_text: question.text,
-      type: question.type,
-      options: question.options || null,
-      correct_answer: Array.isArray(question.correct_answer) 
-        ? JSON.stringify(question.correct_answer) 
-        : question.correct_answer || null,
-      media_urls: question.media_urls || null,
-      difficulty: question.difficulty,
-      tags: question.tags || null,
-      points: question.points || 1, // Default to 1 point if not specified
-      created_by: question.created_by
-    };
+    const dbQuestion = mapQuestionToDbRecord(question);
 
     const { data, error } = await supabase
       .from('questions')
@@ -38,44 +39,30 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
       .single();
 
     if (error) {
-      console.error('Error creating question', error);
+      console.error('Error creating question:', error);
       throw error;
     }
 
-    // Map database response back to our frontend model
-    const record = data as QuestionDBRecord;
     return {
-      id: record.id,
-      subject_id: record.subject_id || null,
-      text: record.question_text,
-      type: record.type || 'MCQ', // Provide default if missing
-      options: Array.isArray(record.options) ? record.options : null,
-      correct_answer: record.correct_answer,
-      media_urls: record.media_urls || null,
-      difficulty: record.difficulty || 'medium', // Provide default if missing
-      tags: record.tags || null,
-      created_at: record.created_at,
-      updated_at: record.updated_at,
-      created_by: record.created_by
-    } as Question;
+      id: data.id,
+      subject_id: data.subject_id || null,
+      text: data.question_text,
+      type: data.type || 'MCQ',
+      options: Array.isArray(data.options) ? data.options : null,
+      correct_answer: data.correct_answer,
+      media_urls: data.media_urls || null,
+      difficulty: data.difficulty || 'medium',
+      tags: data.tags || null,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      created_by: data.created_by
+    };
   };
 
   return useMutation({
     mutationFn: createQuestion,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
-      queryClient.invalidateQueries({ queryKey: ['questions', data.subject_id] });
-      toast({
-        title: "Question created",
-        description: "Your question has been created successfully."
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to create question",
-        description: error.message,
-        variant: "destructive"
-      });
     }
   });
 };

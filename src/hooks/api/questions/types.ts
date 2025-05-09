@@ -34,3 +34,21 @@ export type QuestionDBRecord = {
   updated_at: string;
   created_by: string;
 };
+
+// Helper type for frontend to DB model conversion
+export type QuestionDBInsert = {
+  question_text: string;
+  exam_id?: string | null;
+  subject_id?: string | null;
+  type?: QuestionType;
+  options?: Json | null;
+  correct_answer?: string | null;
+  points?: number | null;
+  media_urls?: string[] | null;
+  difficulty?: QuestionDifficulty;
+  tags?: string[] | null;
+  created_by: string;
+};
+
+// Helper type for DB to frontend model conversion
+export type QuestionDBUpdate = Partial<QuestionDBInsert> & { id: string };

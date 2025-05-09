@@ -4,6 +4,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { Question } from '@/types/exam';
 import { QuestionDBRecord } from './types';
 
+// Helper function to convert DB record to frontend model
+const mapDbRecordToQuestion = (item: QuestionDBRecord): Question => {
+  return {
+    id: item.id,
+    subject_id: item.subject_id || null,
+    text: item.question_text,
+    type: item.type || 'MCQ', // Provide default if missing
+    options: Array.isArray(item.options) ? item.options : null,
+    correct_answer: item.correct_answer,
+    media_urls: item.media_urls || null,
+    difficulty: item.difficulty || 'medium', // Provide default if missing
+    tags: item.tags || null,
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+    created_by: item.created_by
+  };
+};
+
 export const useFetchQuestions = (subjectId?: string, canView: boolean = true) => {
   const fetchQuestions = async (): Promise<Question[]> => {
     if (!canView) {
@@ -27,20 +45,7 @@ export const useFetchQuestions = (subjectId?: string, canView: boolean = true) =
     }
 
     // Map database response to our frontend model
-    return (data || []).map((item: QuestionDBRecord) => ({
-      id: item.id,
-      subject_id: item.subject_id || null,
-      text: item.question_text,
-      type: item.type || 'MCQ', // Provide default if missing
-      options: Array.isArray(item.options) ? item.options : null,
-      correct_answer: item.correct_answer,
-      media_urls: item.media_urls || null,
-      difficulty: item.difficulty || 'medium', // Provide default if missing
-      tags: item.tags || null,
-      created_at: item.created_at,
-      updated_at: item.updated_at,
-      created_by: item.created_by
-    } as Question));
+    return (data || []).map(mapDbRecordToQuestion);
   };
 
   const fetchQuestion = async (id: string): Promise<Question | null> => {
@@ -59,23 +64,8 @@ export const useFetchQuestions = (subjectId?: string, canView: boolean = true) =
       throw error;
     }
 
-    const item = data as QuestionDBRecord;
-    
     // Map database response to our frontend model
-    return {
-      id: item.id,
-      subject_id: item.subject_id || null,
-      text: item.question_text,
-      type: item.type || 'MCQ', // Provide default if missing
-      options: Array.isArray(item.options) ? item.options : null,
-      correct_answer: item.correct_answer,
-      media_urls: item.media_urls || null,
-      difficulty: item.difficulty || 'medium', // Provide default if missing
-      tags: item.tags || null,
-      created_at: item.created_at,
-      updated_at: item.updated_at,
-      created_by: item.created_by
-    } as Question;
+    return mapDbRecordToQuestion(data as QuestionDBRecord);
   };
   
   const useAllQuestions = () => {
