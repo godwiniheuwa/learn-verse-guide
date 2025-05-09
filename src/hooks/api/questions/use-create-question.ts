@@ -34,7 +34,7 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
 
     const { data, error } = await supabase
       .from('questions')
-      .insert(dbQuestion)
+      .insert([dbQuestion]) // Wrap dbQuestion in an array
       .select()
       .single();
 
@@ -43,6 +43,7 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
       throw error;
     }
 
+    // Map the database response back to our frontend model
     return {
       id: data.id,
       subject_id: data.subject_id || null,
@@ -53,6 +54,7 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
       media_urls: data.media_urls || null,
       difficulty: data.difficulty || 'medium',
       tags: data.tags || null,
+      points: data.points || 1,
       created_at: data.created_at,
       updated_at: data.updated_at,
       created_by: data.created_by

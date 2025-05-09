@@ -4,7 +4,7 @@ import { Json } from '@/integrations/supabase/types';
 
 export type NewQuestion = {
   subject_id?: string | null;
-  exam_id?: string | null; // Added to match DB schema
+  exam_id?: string | null;
   text: string; // This maps to question_text in DB
   type: QuestionType;
   options?: string[] | null;
@@ -12,7 +12,7 @@ export type NewQuestion = {
   media_urls?: string[] | null;
   difficulty: QuestionDifficulty;
   tags?: string[] | null;
-  points?: number | null; // Added to match DB schema
+  points?: number | null;
 };
 
 export type UpdateQuestionData = Partial<NewQuestion> & { id: string };
@@ -21,15 +21,15 @@ export type UpdateQuestionData = Partial<NewQuestion> & { id: string };
 export type QuestionDBRecord = {
   id: string;
   exam_id: string | null;
-  subject_id?: string | null; // Added to map our model to DB
+  subject_id?: string | null;
   question_text: string;
-  type?: QuestionType; // Added to map our model to DB
+  type?: QuestionType;
   options: Json | null;
   correct_answer: string | null;
   points: number | null;
-  media_urls?: string[] | null; // Added to map our model to DB
-  difficulty?: QuestionDifficulty; // Added to map our model to DB
-  tags?: string[] | null; // Added to map our model to DB
+  media_urls?: string[] | null;
+  difficulty?: QuestionDifficulty;
+  tags?: string[] | null;
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -38,7 +38,7 @@ export type QuestionDBRecord = {
 // Helper type for frontend to DB model conversion
 export type QuestionDBInsert = {
   question_text: string;
-  exam_id?: string | null;
+  exam_id?: string | null; // Make exam_id optional to match the error
   subject_id?: string | null;
   type?: QuestionType;
   options?: Json | null;

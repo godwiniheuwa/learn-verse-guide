@@ -2,6 +2,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { UpdateQuestionData, QuestionDBUpdate } from './types';
+import { Json } from '@/integrations/supabase/types';
 
 // Helper function to convert frontend model to DB model for update
 const mapUpdateToDbRecord = (question: UpdateQuestionData): QuestionDBUpdate => {
@@ -11,7 +12,7 @@ const mapUpdateToDbRecord = (question: UpdateQuestionData): QuestionDBUpdate => 
   if (question.subject_id !== undefined) dbUpdate.subject_id = question.subject_id;
   if (question.exam_id !== undefined) dbUpdate.exam_id = question.exam_id;
   if (question.type !== undefined) dbUpdate.type = question.type;
-  if (question.options !== undefined) dbUpdate.options = question.options;
+  if (question.options !== undefined) dbUpdate.options = question.options as unknown as Json;
   if (question.correct_answer !== undefined) {
     dbUpdate.correct_answer = Array.isArray(question.correct_answer) 
       ? JSON.stringify(question.correct_answer) 
@@ -48,16 +49,19 @@ export const useUpdateQuestion = (canUpdate: boolean = true) => {
       throw error;
     }
 
+    // Map the response back to our frontend model
     return {
       id: data.id,
       subject_id: data.subject_id || null,
       text: data.question_text,
       type: data.type || 'MCQ',
-      options: Array.isArray(data.options) ? data.options : null,
+      options: Array.isArray(data.options) ? 
+        data.options.map(opt => String(opt)) : null,
       correct_answer: data.correct_answer,
       media_urls: data.media_urls || null,
       difficulty: data.difficulty || 'medium',
       tags: data.tags || null,
+      points: data.points || 1,
       created_at: data.created_at,
       updated_at: data.updated_at,
       created_by: data.created_by

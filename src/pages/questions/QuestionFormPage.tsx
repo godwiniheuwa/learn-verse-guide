@@ -47,6 +47,7 @@ const questionSchema = z.object({
   correct_answer: z.union([z.string(), z.array(z.string())]).optional(),
   media_urls: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
+  points: z.number().optional(),
 });
 
 type FormValues = z.infer<typeof questionSchema>;
@@ -76,6 +77,7 @@ const QuestionFormPage = () => {
       correct_answer: "",
       media_urls: [],
       tags: [],
+      points: 1,
     },
   });
 
@@ -94,9 +96,10 @@ const QuestionFormPage = () => {
       // Clean up empty fields
       const cleanData = {
         ...data,
-        options: data.options?.filter(o => o.trim() !== ""),
-        media_urls: data.media_urls?.filter(m => m.trim() !== ""),
-        tags: data.tags?.filter(t => t.trim() !== ""),
+        options: data.options?.filter(o => o.trim() !== "") || [],
+        media_urls: data.media_urls?.filter(m => m.trim() !== "") || [],
+        tags: data.tags?.filter(t => t.trim() !== "") || [],
+        points: data.points || 1,
       };
 
       if (isEditing && id) {
@@ -126,6 +129,7 @@ const QuestionFormPage = () => {
         correct_answer: question.correct_answer,
         media_urls: question.media_urls || [],
         tags: question.tags || [],
+        points: question.points || 1,
       });
     }
   }, [isEditing, question, form]);

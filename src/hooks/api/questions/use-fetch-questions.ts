@@ -6,16 +6,28 @@ import { QuestionDBRecord } from './types';
 
 // Helper function to convert DB record to frontend model
 const mapDbRecordToQuestion = (item: QuestionDBRecord): Question => {
+  // Safely convert options from Json to string[]
+  const options = item.options ? 
+    (Array.isArray(item.options) ? 
+      item.options.map(opt => String(opt)) : null) : 
+    null;
+
+  // Safely convert media_urls
+  const mediaUrls = item.media_urls || null;
+
+  // Safely convert tags
+  const tags = item.tags || null;
+
   return {
     id: item.id,
     subject_id: item.subject_id || null,
     text: item.question_text,
     type: item.type || 'MCQ', // Provide default if missing
-    options: Array.isArray(item.options) ? item.options : null,
+    options: options,
     correct_answer: item.correct_answer,
-    media_urls: item.media_urls || null,
+    media_urls: mediaUrls,
     difficulty: item.difficulty || 'medium', // Provide default if missing
-    tags: item.tags || null,
+    tags: tags,
     created_at: item.created_at,
     updated_at: item.updated_at,
     created_by: item.created_by
@@ -45,7 +57,7 @@ export const useFetchQuestions = (subjectId?: string, canView: boolean = true) =
     }
 
     // Map database response to our frontend model
-    return (data || []).map(mapDbRecordToQuestion);
+    return (data || []).map(item => mapDbRecordToQuestion(item as QuestionDBRecord));
   };
 
   const fetchQuestion = async (id: string): Promise<Question | null> => {
@@ -68,24 +80,17 @@ export const useFetchQuestions = (subjectId?: string, canView: boolean = true) =
     return mapDbRecordToQuestion(data as QuestionDBRecord);
   };
   
-  const useAllQuestions = () => {
-    return useQuery({
+  // Return separate hooks to avoid infinite recursion
+  return {
+    useAllQuestions: () => useQuery({
       queryKey: ['questions', subjectId],
       queryFn: fetchQuestions,
       enabled: canView
-    });
-  };
-
-  const useQuestion = (id: string) => {
-    return useQuery({
+    }),
+    useQuestion: (id: string) => useQuery({
       queryKey: ['questions', id],
       queryFn: () => fetchQuestion(id),
       enabled: !!id && canView
-    });
-  };
-
-  return {
-    useAllQuestions,
-    useQuestion
+    })
   };
 };
