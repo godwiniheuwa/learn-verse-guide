@@ -21,7 +21,7 @@ export const TagsSection = ({ control }: TagsSectionProps) => {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => appendTag("" as any)}
+          onClick={() => appendTag("")}
         >
           <PlusIcon className="h-4 w-4 mr-2" />
           Add Tag

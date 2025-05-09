@@ -25,7 +25,7 @@ export const QuestionOptionsSection = ({ control }: QuestionOptionsSectionProps)
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => appendOption("" as any)}
+            onClick={() => appendOption("")}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             Add Option
