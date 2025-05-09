@@ -1,8 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/auth';
-import { toast } from '@/hooks/use-toast';
 
+// Use these constants instead of accessing supabase.supabaseUrl and supabase.supabaseKey
 const SUPABASE_URL = "https://lemshjwutppclhhboeae.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA";
 

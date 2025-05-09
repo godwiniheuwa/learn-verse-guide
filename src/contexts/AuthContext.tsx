@@ -11,6 +11,13 @@ import {
   signOut 
 } from '@/services/auth.service';
 
+// Import constants directly from the client file
+import { supabase } from '@/integrations/supabase/client';
+
+// Define these constants to match what's in the supabase client file
+const SUPABASE_URL = "https://lemshjwutppclhhboeae.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA";
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -38,7 +45,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (name: string, email: string, username: string, password: string) => {
     try {
-      const result = await signupWithEmail(name, email, username, password);
+      // Use the constants instead of accessing protected properties
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ name, email, username, password }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Signup failed');
+      }
       
       toast({
         title: 'Account created',
@@ -58,7 +79,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const forgotPassword = async (email: string) => {
     try {
-      const result = await requestPasswordReset(email);
+      // Use the constants instead of accessing protected properties
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok && result.error) {
+        throw new Error(result.error);
+      }
       
       toast({
         title: 'Password reset email sent',
@@ -78,7 +113,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (token: string, password: string) => {
     try {
-      const result = await resetPasswordWithToken(token, password);
+      // Use the constants instead of accessing protected properties
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ token, password }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Password reset failed');
+      }
       
       toast({
         title: 'Password reset successful',
