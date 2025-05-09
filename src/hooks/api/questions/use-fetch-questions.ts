@@ -25,7 +25,21 @@ export const useFetchQuestions = (subjectId?: string, canView: boolean = true) =
       throw error;
     }
 
-    return data as Question[] || [];
+    // Map database response to our frontend model
+    return (data || []).map(item => ({
+      id: item.id,
+      subject_id: item.subject_id,
+      text: item.question_text,
+      type: item.type,
+      options: item.options,
+      correct_answer: item.correct_answer,
+      media_urls: item.media_urls,
+      difficulty: item.difficulty,
+      tags: item.tags,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      created_by: item.created_by
+    } as Question));
   };
 
   const fetchQuestion = async (id: string): Promise<Question | null> => {
@@ -44,7 +58,21 @@ export const useFetchQuestions = (subjectId?: string, canView: boolean = true) =
       throw error;
     }
 
-    return data as Question;
+    // Map database response to our frontend model
+    return {
+      id: data.id,
+      subject_id: data.subject_id,
+      text: data.question_text,
+      type: data.type,
+      options: data.options,
+      correct_answer: data.correct_answer,
+      media_urls: data.media_urls,
+      difficulty: data.difficulty,
+      tags: data.tags,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      created_by: data.created_by
+    } as Question;
   };
   
   const useAllQuestions = () => {

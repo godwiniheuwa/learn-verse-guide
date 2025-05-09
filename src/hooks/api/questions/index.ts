@@ -1,6 +1,6 @@
 
 import { useFetchQuestions } from './use-fetch-questions';
-import { useCreateQuestion } from './use-create-question';
+import { useCreateQuestion as useCreateQuestionHook } from './use-create-question';
 import { useUpdateQuestion } from './use-update-question';
 import { useDeleteQuestion } from './use-delete-question';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,7 +18,7 @@ export const useQuestions = (subjectId?: string) => {
   const canDelete = hasPermission(user, 'questions', 'delete');
 
   const { useAllQuestions, useQuestion } = useFetchQuestions(subjectId, canView);
-  const createQuestionMutation = useCreateQuestion(canCreate);
+  const createQuestionMutation = useCreateQuestionHook(canCreate);
   const updateQuestionMutation = useUpdateQuestion(canUpdate);
   const deleteQuestionMutation = useDeleteQuestion(canDelete, subjectId);
 

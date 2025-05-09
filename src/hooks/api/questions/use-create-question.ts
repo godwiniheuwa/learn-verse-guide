@@ -14,9 +14,22 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
       throw new Error("You don't have permission to create questions");
     }
 
+    // Map our frontend model to database schema
+    const dbQuestion = {
+      subject_id: question.subject_id,
+      question_text: question.text,
+      type: question.type,
+      options: question.options || null,
+      correct_answer: question.correct_answer || null,
+      media_urls: question.media_urls || null,
+      difficulty: question.difficulty,
+      tags: question.tags || null,
+      created_by: question.created_by
+    };
+
     const { data, error } = await supabase
       .from('questions')
-      .insert(question)
+      .insert(dbQuestion)
       .select()
       .single();
 
@@ -25,7 +38,21 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
       throw error;
     }
 
-    return data as Question;
+    // Map database response back to our frontend model
+    return {
+      id: data.id,
+      subject_id: data.subject_id,
+      text: data.question_text,
+      type: data.type,
+      options: data.options,
+      correct_answer: data.correct_answer,
+      media_urls: data.media_urls,
+      difficulty: data.difficulty,
+      tags: data.tags,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      created_by: data.created_by
+    } as Question;
   };
 
   return useMutation({

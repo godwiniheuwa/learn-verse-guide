@@ -15,9 +15,21 @@ export const useUpdateQuestion = (canUpdate: boolean = true) => {
     }
 
     const { id, ...updates } = questionData;
+    
+    // Map our frontend model to database schema
+    const dbUpdates: any = {};
+    if (updates.text) dbUpdates.question_text = updates.text;
+    if (updates.type !== undefined) dbUpdates.type = updates.type;
+    if (updates.options !== undefined) dbUpdates.options = updates.options;
+    if (updates.correct_answer !== undefined) dbUpdates.correct_answer = updates.correct_answer;
+    if (updates.media_urls !== undefined) dbUpdates.media_urls = updates.media_urls;
+    if (updates.difficulty !== undefined) dbUpdates.difficulty = updates.difficulty;
+    if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
+    if (updates.subject_id !== undefined) dbUpdates.subject_id = updates.subject_id;
+
     const { data, error } = await supabase
       .from('questions')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', id)
       .select()
       .single();
@@ -27,7 +39,21 @@ export const useUpdateQuestion = (canUpdate: boolean = true) => {
       throw error;
     }
 
-    return data as Question;
+    // Map database response to our frontend model
+    return {
+      id: data.id,
+      subject_id: data.subject_id,
+      text: data.question_text,
+      type: data.type,
+      options: data.options,
+      correct_answer: data.correct_answer,
+      media_urls: data.media_urls,
+      difficulty: data.difficulty,
+      tags: data.tags,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      created_by: data.created_by
+    } as Question;
   };
 
   return useMutation({

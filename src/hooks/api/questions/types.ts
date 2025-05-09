@@ -12,4 +12,4 @@ export type NewQuestion = {
   tags?: string[] | null;
 };
 
-export type UpdateQuestionData = Partial<Question> & { id: string };
+export type UpdateQuestionData = Partial<NewQuestion> & { id: string };
