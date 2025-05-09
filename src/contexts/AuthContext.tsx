@@ -63,7 +63,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single();
         
         if (error) throw error;
-        if (data) setUser(data as User);
+        if (data) {
+          // Transform the data to match our User type
+          const userData: User = {
+            id: data.id,
+            email: data.email,
+            name: data.name,
+            username: data.username,
+            role: data.role,
+            isActive: data.is_active
+          };
+          setUser(userData);
+        }
       }
     } catch (error) {
       console.error('Error checking user:', error);
@@ -98,7 +109,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single();
           
         if (userError) throw userError;
-        setUser(userData as User);
+        
+        // Transform the data to match our User type
+        const transformedUser: User = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.name,
+          username: userData.username,
+          role: userData.role,
+          isActive: userData.is_active
+        };
+        
+        setUser(transformedUser);
         
         toast({
           title: 'Login successful',
