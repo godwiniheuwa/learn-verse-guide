@@ -1,24 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useForm, Controller, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuestions } from "@/hooks/api/use-questions";
 import { useSubjects } from "@/hooks/api/use-subjects";
-import { Question, QuestionType, QuestionDifficulty } from "@/types/exam";
 import {
   Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,31 +18,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PlusIcon, TrashIcon } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
-
-// Form schema
-const questionSchema = z.object({
-  text: z.string().min(1, "Question text is required"),
-  type: z.enum(["MCQ", "theory"]),
-  subject_id: z.string().nullable().optional(),
-  difficulty: z.enum(["easy", "medium", "hard"]),
-  options: z.array(z.string()).optional(),
-  correct_answer: z.union([z.string(), z.array(z.string())]).optional(),
-  // Removed media_urls field
-  tags: z.array(z.string()).optional(),
-  points: z.number().optional(),
-});
-
-type FormValues = z.infer<typeof questionSchema>;
+import { QuestionDetailsSection } from "@/components/questions/QuestionDetailsSection";
+import { QuestionOptionsSection } from "@/components/questions/QuestionOptionsSection";
+import { TheoryAnswerSection } from "@/components/questions/TheoryAnswerSection";
+import { TagsSection } from "@/components/questions/TagsSection";
+import { questionSchema, FormValues } from "@/components/questions/QuestionFormTypes";
 
 const QuestionFormPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -72,24 +43,15 @@ const QuestionFormPage = () => {
     resolver: zodResolver(questionSchema),
     defaultValues: {
       text: "",
-      type: "MCQ" as QuestionType,
-      difficulty: "medium" as QuestionDifficulty,
+      type: "MCQ",
+      difficulty: "medium",
       subject_id: null,
       options: ["", "", "", ""],
       correct_answer: "",
-      // Removed media_urls default value
       tags: [] as string[],
       points: 1,
     },
   });
-
-  const { fields: optionFields, append: appendOption, remove: removeOption } = 
-    useFieldArray({ control: form.control, name: "options" });
-  
-  // Removed mediaFields useFieldArray
-  
-  const { fields: tagFields, append: appendTag, remove: removeTag } = 
-    useFieldArray({ control: form.control, name: "tags" });
 
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
@@ -98,7 +60,6 @@ const QuestionFormPage = () => {
       const cleanData = {
         ...data,
         options: data.options?.filter(o => o.trim() !== "") || [],
-        // Removed media_urls cleaning
         tags: data.tags?.filter(t => t.trim() !== "") || [],
         points: data.points || 1,
       };
@@ -141,7 +102,6 @@ const QuestionFormPage = () => {
         difficulty: question.difficulty,
         options: question.options || ["", "", "", ""],
         correct_answer: question.correct_answer as string,
-        // Removed media_urls
         tags: question.tags || [],
         points: question.points || 1,
       });
@@ -178,253 +138,21 @@ const QuestionFormPage = () => {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="text"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Question Text</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Enter the question text"
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Question Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select question type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="MCQ">Multiple Choice</SelectItem>
-                          <SelectItem value="theory">Theory</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="difficulty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Difficulty</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select difficulty" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="easy">Easy</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="hard">Hard</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="subject_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subject</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value || ""}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select subject" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">None</SelectItem>
-                          {subjects?.map((subject) => (
-                            <SelectItem key={subject.id} value={subject.id}>
-                              {subject.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              {/* Question Details Section */}
+              <QuestionDetailsSection control={form.control} subjects={subjects} />
 
               {/* Options for MCQ */}
               {questionType === "MCQ" && (
-                <>
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-lg font-medium">Options</h3>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => appendOption("")}
-                      >
-                        <PlusIcon className="h-4 w-4 mr-2" />
-                        Add Option
-                      </Button>
-                    </div>
-                    <div className="space-y-3">
-                      {optionFields.map((field, index) => (
-                        <div key={field.id} className="flex gap-2">
-                          <Controller
-                            name={`options.${index}`}
-                            control={form.control}
-                            render={({ field }) => (
-                              <Input
-                                placeholder={`Option ${index + 1}`}
-                                {...field}
-                                className="flex-1"
-                              />
-                            )}
-                          />
-                          {index > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeOption(index)}
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="correct_answer"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Correct Answer</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value as string}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select correct answer" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {form.watch("options")?.map((option, index) => (
-                              option.trim() !== "" && (
-                                <SelectItem key={index} value={option}>
-                                  {option}
-                                </SelectItem>
-                              )
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Select the correct answer from the options
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
+                <QuestionOptionsSection control={form.control} />
               )}
 
               {/* Sample answer for Theory */}
               {questionType === "theory" && (
-                <FormField
-                  control={form.control}
-                  name="correct_answer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sample Answer</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Enter a sample answer"
-                          className="min-h-[100px]"
-                          {...field}
-                          value={field.value as string || ""}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Provide a sample answer for grading reference
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <TheoryAnswerSection control={form.control} />
               )}
 
-              {/* Removed Media URLs section */}
-
               {/* Tags */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-medium">Tags</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => appendTag("")}
-                  >
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Add Tag
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {tagFields.map((field, index) => (
-                    <div key={field.id} className="flex gap-2">
-                      <Controller
-                        name={`tags.${index}`}
-                        control={form.control}
-                        render={({ field }) => (
-                          <Input
-                            placeholder="Enter tag"
-                            {...field}
-                            className="flex-1"
-                          />
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeTag(index)}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <TagsSection control={form.control} />
 
               <div className="flex justify-end gap-2">
                 <Button type="submit" disabled={createQuestion.isPending || updateQuestion.isPending}>
