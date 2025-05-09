@@ -17,6 +17,7 @@ export const useQuestions = (subjectId?: string) => {
   const canUpdate = hasPermission(user, 'questions', 'update');
   const canDelete = hasPermission(user, 'questions', 'delete');
 
+  // Get the hooks from useFetchQuestions
   const { useAllQuestions, useQuestion } = useFetchQuestions(subjectId, canView);
   const createQuestionMutation = useCreateQuestion(canCreate);
   const updateQuestionMutation = useUpdateQuestion(canUpdate);

@@ -21,15 +21,15 @@ export type UpdateQuestionData = Partial<NewQuestion> & { id: string };
 export type QuestionDBRecord = {
   id: string;
   exam_id: string | null;
-  subject_id?: string | null;
+  subject_id: string | null;
   question_text: string;
-  type?: QuestionType;
+  type: QuestionType;
   options: Json | null;
   correct_answer: string | null;
   points: number | null;
-  media_urls?: string[] | null;
-  difficulty?: QuestionDifficulty;
-  tags?: string[] | null;
+  media_urls: Json | null;
+  difficulty: QuestionDifficulty;
+  tags: string[] | null;
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -38,14 +38,14 @@ export type QuestionDBRecord = {
 // Helper type for frontend to DB model conversion
 export type QuestionDBInsert = {
   question_text: string;
-  exam_id?: string | null; // Making exam_id optional since it seems to be causing issues
+  exam_id?: string | null; // Make exam_id optional to match the updated schema
   subject_id?: string | null;
-  type?: QuestionType;
+  type: QuestionType;
   options?: Json | null;
   correct_answer?: string | null;
   points?: number | null;
-  media_urls?: string[] | null;
-  difficulty?: QuestionDifficulty;
+  media_urls?: Json | null;
+  difficulty: QuestionDifficulty;
   tags?: string[] | null;
   created_by: string;
 };

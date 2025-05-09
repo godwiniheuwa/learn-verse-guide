@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { UpdateQuestionData, QuestionDBUpdate } from './types';
 import { Json } from '@/integrations/supabase/types';
+import { toast } from '@/hooks/use-toast';
 
 // Helper function to convert frontend model to DB model for update
 const mapUpdateToDbRecord = (question: UpdateQuestionData): QuestionDBUpdate => {
@@ -19,7 +20,7 @@ const mapUpdateToDbRecord = (question: UpdateQuestionData): QuestionDBUpdate => 
       : question.correct_answer;
   }
   if (question.points !== undefined) dbUpdate.points = question.points;
-  if (question.media_urls !== undefined) dbUpdate.media_urls = question.media_urls;
+  if (question.media_urls !== undefined) dbUpdate.media_urls = question.media_urls as unknown as Json;
   if (question.difficulty !== undefined) dbUpdate.difficulty = question.difficulty;
   if (question.tags !== undefined) dbUpdate.tags = question.tags;
 
@@ -53,12 +54,16 @@ export const useUpdateQuestion = (canUpdate: boolean = true) => {
     return {
       id: data.id,
       subject_id: data.subject_id || null,
+      exam_id: data.exam_id || null,
       text: data.question_text,
       type: data.type || 'MCQ',
       options: Array.isArray(data.options) ? 
         data.options.map(opt => String(opt)) : null,
       correct_answer: data.correct_answer,
-      media_urls: data.media_urls || null,
+      media_urls: data.media_urls ? 
+        (Array.isArray(data.media_urls) ? 
+          data.media_urls.map(url => String(url)) : null) : 
+        null,
       difficulty: data.difficulty || 'medium',
       tags: data.tags || null,
       points: data.points || 1,
@@ -73,6 +78,17 @@ export const useUpdateQuestion = (canUpdate: boolean = true) => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
       queryClient.invalidateQueries({ queryKey: ['questions', data.id] });
+      toast({
+        title: 'Question updated',
+        description: 'The question has been updated successfully.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error updating question',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   });
 };

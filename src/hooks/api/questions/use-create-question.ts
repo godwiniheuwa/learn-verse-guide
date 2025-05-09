@@ -2,6 +2,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { NewQuestion, QuestionDBInsert } from './types';
+import { toast } from '@/hooks/use-toast';
 
 // Helper function to convert frontend model to DB model
 const mapQuestionToDbRecord = (question: NewQuestion & { created_by: string }): QuestionDBInsert => {
@@ -32,7 +33,7 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
 
     const dbQuestion = mapQuestionToDbRecord(question);
 
-    // Fix: Pass dbQuestion directly (not in an array) since we're inserting a single record
+    // Pass dbQuestion directly to the insert function
     const { data, error } = await supabase
       .from('questions')
       .insert(dbQuestion)
@@ -48,6 +49,7 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
     return {
       id: data.id,
       subject_id: data.subject_id || null,
+      exam_id: data.exam_id || null,
       text: data.question_text,
       type: data.type || 'MCQ',
       options: Array.isArray(data.options) ? data.options : null,
@@ -66,6 +68,17 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
     mutationFn: createQuestion,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
+      toast({
+        title: 'Question created',
+        description: 'The question has been created successfully.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error creating question',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   });
 };

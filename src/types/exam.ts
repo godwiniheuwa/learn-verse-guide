@@ -42,6 +42,7 @@ export type QuestionDifficulty = 'easy' | 'medium' | 'hard';
 export interface Question {
   id: string;
   subject_id: string | null;
+  exam_id: string | null; // Make this nullable to match the updated schema
   text: string;
   type: QuestionType;
   options: string[] | null;

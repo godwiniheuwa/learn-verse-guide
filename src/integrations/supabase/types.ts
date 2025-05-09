@@ -108,33 +108,48 @@ export type Database = {
           correct_answer: string | null
           created_at: string
           created_by: string
-          exam_id: string
+          difficulty: string | null
+          exam_id: string | null
           id: string
+          media_urls: Json | null
           options: Json | null
           points: number | null
           question_text: string
+          subject_id: string | null
+          tags: string[] | null
+          type: string | null
           updated_at: string
         }
         Insert: {
           correct_answer?: string | null
           created_at?: string
           created_by: string
-          exam_id: string
+          difficulty?: string | null
+          exam_id?: string | null
           id?: string
+          media_urls?: Json | null
           options?: Json | null
           points?: number | null
           question_text: string
+          subject_id?: string | null
+          tags?: string[] | null
+          type?: string | null
           updated_at?: string
         }
         Update: {
           correct_answer?: string | null
           created_at?: string
           created_by?: string
-          exam_id?: string
+          difficulty?: string | null
+          exam_id?: string | null
           id?: string
+          media_urls?: Json | null
           options?: Json | null
           points?: number | null
           question_text?: string
+          subject_id?: string | null
+          tags?: string[] | null
+          type?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -150,6 +165,13 @@ export type Database = {
             columns: ["exam_id"]
             isOneToOne: false
             referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]
