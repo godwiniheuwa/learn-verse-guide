@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import QuestionsListPage from "./pages/questions/QuestionsListPage";
 import QuestionFormPage from "./pages/questions/QuestionFormPage";
 import QuestionDetailPage from "./pages/questions/QuestionDetailPage";
+import CreateAdminPage from "./pages/Auth/CreateAdminPage";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
             </Route>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/auth/create-admin" element={<CreateAdminPage />} />
             <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
             <Route path="/auth/activate" element={<ActivatePage />} />

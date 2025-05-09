@@ -41,6 +41,66 @@ async function sendEmail(to: string, subject: string, html: string) {
   });
 }
 
+// Helper function to create admin user
+async function createAdminUserIfNotExists() {
+  try {
+    const adminEmail = "admin@examprep.com";
+    
+    // Check if admin user already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', adminEmail)
+      .single();
+    
+    if (!existingUser) {
+      // Create user in Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: adminEmail,
+        password: "Admin@123456",
+        email_confirm: true,
+      });
+
+      if (authError) {
+        console.error("Error creating admin auth user:", authError);
+        return null;
+      }
+
+      if (!authData || !authData.user || !authData.user.id) {
+        console.error("Failed to create admin: No user ID returned");
+        return null;
+      }
+
+      // Insert admin user into users table
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: adminEmail,
+          name: "Admin User",
+          username: "admin",
+          role: "admin",
+          is_active: true,
+          password_hash: 'managed_by_supabase',
+        });
+
+      if (insertError) {
+        console.error("Error inserting admin user:", insertError);
+        return null;
+      }
+
+      console.log("Admin user created successfully");
+      return authData.user.id;
+    } else {
+      console.log("Admin user already exists");
+      return existingUser.id;
+    }
+  } catch (error) {
+    console.error("Error in createAdminUserIfNotExists:", error);
+    return null;
+  }
+}
+
 // Generate activation email
 function generateActivationEmail(name: string, activationUrl: string) {
   return `
@@ -88,6 +148,29 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const path = url.pathname.split('/').pop();
+
+    // Handle admin user creation (for development purposes)
+    if (req.method === "GET" && path === "create-admin") {
+      const adminId = await createAdminUserIfNotExists();
+      
+      if (adminId) {
+        return new Response(
+          JSON.stringify({ 
+            message: "Admin user created or already exists", 
+            credentials: { 
+              email: "admin@examprep.com", 
+              password: "Admin@123456" 
+            } 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      } else {
+        return new Response(
+          JSON.stringify({ error: "Failed to create admin user" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        );
+      }
+    }
 
     // Handle signup
     if (req.method === "POST" && path === "signup") {
@@ -139,7 +222,7 @@ serve(async (req) => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiry
 
-      // Insert user into users table with activation token
+      // Insert user into users table
       const { error: insertError } = await supabase
         .from('users')
         .insert({
