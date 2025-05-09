@@ -31,7 +31,7 @@ export const TagsSection = ({ control }: TagsSectionProps) => {
         {tagFields.map((field, index) => (
           <div key={field.id} className="flex gap-2">
             <Controller
-              name={`tags.${index}`}
+              name={`tags.${index}` as const}
               control={control}
               render={({ field }) => (
                 <Input

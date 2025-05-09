@@ -1,10 +1,14 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
+
+// Use these constants instead of accessing supabase.supabaseUrl and supabase.supabaseKey
+const SUPABASE_URL = "https://lemshjwutppclhhboeae.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA";
 
 const CreateAdminPage = () => {
   const [loading, setLoading] = useState(false);
@@ -15,10 +19,10 @@ const CreateAdminPage = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/auth/create-admin`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/create-admin`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         }
       });
       
