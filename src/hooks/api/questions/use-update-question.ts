@@ -20,7 +20,7 @@ const mapUpdateToDbRecord = (question: UpdateQuestionData): QuestionDBUpdate => 
       : question.correct_answer;
   }
   if (question.points !== undefined) dbUpdate.points = question.points;
-  if (question.media_urls !== undefined) dbUpdate.media_urls = question.media_urls as unknown as Json;
+  // Removed media_urls mapping
   if (question.difficulty !== undefined) dbUpdate.difficulty = question.difficulty;
   if (question.tags !== undefined) dbUpdate.tags = question.tags;
 
@@ -60,10 +60,7 @@ export const useUpdateQuestion = (canUpdate: boolean = true) => {
       options: Array.isArray(data.options) ? 
         data.options.map(opt => String(opt)) : null,
       correct_answer: data.correct_answer,
-      media_urls: data.media_urls ? 
-        (Array.isArray(data.media_urls) ? 
-          data.media_urls.map(url => String(url)) : null) : 
-        null,
+      // Removed media_urls from return mapping
       difficulty: data.difficulty || 'medium',
       tags: data.tags || null,
       points: data.points || 1,

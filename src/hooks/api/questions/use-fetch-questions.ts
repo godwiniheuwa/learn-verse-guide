@@ -12,12 +12,6 @@ const mapDbRecordToQuestion = (item: QuestionDBRecord): Question => {
       item.options.map(opt => String(opt)) : null) : 
     null;
 
-  // Safely convert media_urls
-  const mediaUrls = item.media_urls ? 
-    (Array.isArray(item.media_urls) ? 
-      item.media_urls.map(url => String(url)) : null) : 
-    null;
-
   // Safely convert tags
   const tags = item.tags || null;
 
@@ -29,7 +23,7 @@ const mapDbRecordToQuestion = (item: QuestionDBRecord): Question => {
     type: item.type || 'MCQ',
     options: options,
     correct_answer: item.correct_answer,
-    media_urls: mediaUrls,
+    // Removed media_urls mapping
     difficulty: item.difficulty || 'medium',
     tags: tags,
     points: item.points || 1,

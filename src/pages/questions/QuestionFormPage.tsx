@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
@@ -46,7 +47,7 @@ const questionSchema = z.object({
   difficulty: z.enum(["easy", "medium", "hard"]),
   options: z.array(z.string()).optional(),
   correct_answer: z.union([z.string(), z.array(z.string())]).optional(),
-  media_urls: z.array(z.string()).optional(),
+  // Removed media_urls field
   tags: z.array(z.string()).optional(),
   points: z.number().optional(),
 });
@@ -76,7 +77,7 @@ const QuestionFormPage = () => {
       subject_id: null,
       options: ["", "", "", ""],
       correct_answer: "",
-      media_urls: [] as string[],
+      // Removed media_urls default value
       tags: [] as string[],
       points: 1,
     },
@@ -85,8 +86,7 @@ const QuestionFormPage = () => {
   const { fields: optionFields, append: appendOption, remove: removeOption } = 
     useFieldArray({ control: form.control, name: "options" });
   
-  const { fields: mediaFields, append: appendMedia, remove: removeMedia } = 
-    useFieldArray({ control: form.control, name: "media_urls" });
+  // Removed mediaFields useFieldArray
   
   const { fields: tagFields, append: appendTag, remove: removeTag } = 
     useFieldArray({ control: form.control, name: "tags" });
@@ -98,7 +98,7 @@ const QuestionFormPage = () => {
       const cleanData = {
         ...data,
         options: data.options?.filter(o => o.trim() !== "") || [],
-        media_urls: data.media_urls?.filter(m => m.trim() !== "") || [],
+        // Removed media_urls cleaning
         tags: data.tags?.filter(t => t.trim() !== "") || [],
         points: data.points || 1,
       };
@@ -141,7 +141,7 @@ const QuestionFormPage = () => {
         difficulty: question.difficulty,
         options: question.options || ["", "", "", ""],
         correct_answer: question.correct_answer as string,
-        media_urls: question.media_urls || [],
+        // Removed media_urls
         tags: question.tags || [],
         points: question.points || 1,
       });
@@ -154,7 +154,6 @@ const QuestionFormPage = () => {
   if (isLoadingQuestion && isEditing) {
     return <div className="container mx-auto py-8">Loading question...</div>;
   }
-
   
   return (
     <div className="container mx-auto py-8">
@@ -384,46 +383,7 @@ const QuestionFormPage = () => {
                 />
               )}
 
-              {/* Media URLs */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-medium">Media URLs</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => appendMedia("")}
-                  >
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Add Media
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {mediaFields.map((field, index) => (
-                    <div key={field.id} className="flex gap-2">
-                      <Controller
-                        name={`media_urls.${index}`}
-                        control={form.control}
-                        render={({ field }) => (
-                          <Input
-                            placeholder="Enter media URL"
-                            {...field}
-                            className="flex-1"
-                          />
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeMedia(index)}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Removed Media URLs section */}
 
               {/* Tags */}
               <div>

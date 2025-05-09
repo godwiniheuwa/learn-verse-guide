@@ -124,31 +124,7 @@ const QuestionDetailPage = () => {
               </div>
             )}
 
-            {question.media_urls && question.media_urls.length > 0 && (
-              <div>
-                <h3 className="font-medium mb-2">Media:</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {question.media_urls.map((url: string, index: number) => (
-                    <div key={index} className="border rounded overflow-hidden">
-                      {url.match(/\.(jpeg|jpg|gif|png)$/i) ? (
-                        <img src={url} alt={`Media ${index + 1}`} className="w-full h-auto" />
-                      ) : url.match(/\.(mp4|webm|ogg)$/i) ? (
-                        <video controls className="w-full h-auto">
-                          <source src={url} />
-                          Your browser does not support the video tag.
-                        </video>
-                      ) : (
-                        <div className="p-4 text-center">
-                          <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            View File
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Removed media_urls section */}
           </div>
         </CardContent>
         <CardFooter className="text-sm text-gray-500">

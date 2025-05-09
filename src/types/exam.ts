@@ -47,7 +47,7 @@ export interface Question {
   type: QuestionType;
   options: string[] | null;
   correct_answer: string | string[] | null;
-  media_urls: string[] | null;
+  // Removed media_urls property which was causing issues
   difficulty: QuestionDifficulty;
   tags: string[] | null;
   points: number | null;

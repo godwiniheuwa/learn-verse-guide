@@ -9,7 +9,7 @@ export type NewQuestion = {
   type: QuestionType;
   options?: string[] | null;
   correct_answer?: string | string[] | null;
-  media_urls?: string[] | null;
+  // Removed media_urls property
   difficulty: QuestionDifficulty;
   tags?: string[] | null;
   points?: number | null;
@@ -27,7 +27,7 @@ export type QuestionDBRecord = {
   options: Json | null;
   correct_answer: string | null;
   points: number | null;
-  media_urls: Json | null;
+  media_urls: Json | null; // Keep this for DB mapping
   difficulty: QuestionDifficulty;
   tags: string[] | null;
   created_at: string;
@@ -44,7 +44,7 @@ export type QuestionDBInsert = {
   options?: Json | null;
   correct_answer?: string | null;
   points?: number | null;
-  media_urls?: Json | null;
+  // media_urls?: Json | null; - Commented out
   difficulty: QuestionDifficulty;
   tags?: string[] | null;
   created_by: string;

@@ -16,7 +16,7 @@ const mapQuestionToDbRecord = (question: NewQuestion & { created_by: string }): 
       ? JSON.stringify(question.correct_answer) 
       : question.correct_answer || null,
     points: question.points || 1,
-    media_urls: question.media_urls || null,
+    // Removed media_urls mapping
     difficulty: question.difficulty,
     tags: question.tags || null,
     created_by: question.created_by
@@ -54,7 +54,7 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
       type: data.type || 'MCQ',
       options: Array.isArray(data.options) ? data.options : null,
       correct_answer: data.correct_answer,
-      media_urls: data.media_urls || null,
+      // Removed media_urls mapping
       difficulty: data.difficulty || 'medium',
       tags: data.tags || null,
       points: data.points || 1,
