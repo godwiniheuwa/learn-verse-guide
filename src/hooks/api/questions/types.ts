@@ -38,7 +38,7 @@ export type QuestionDBRecord = {
 // Helper type for frontend to DB model conversion
 export type QuestionDBInsert = {
   question_text: string;
-  exam_id?: string | null; // Make exam_id optional to match the error
+  exam_id?: string | null; // Making exam_id optional since it seems to be causing issues
   subject_id?: string | null;
   type?: QuestionType;
   options?: Json | null;

@@ -49,6 +49,7 @@ export interface Question {
   media_urls: string[] | null;
   difficulty: QuestionDifficulty;
   tags: string[] | null;
+  points: number | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;

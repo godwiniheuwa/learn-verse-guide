@@ -32,9 +32,10 @@ export const useCreateQuestion = (canCreate: boolean = true) => {
 
     const dbQuestion = mapQuestionToDbRecord(question);
 
+    // Fix: Pass dbQuestion directly (not in an array) since we're inserting a single record
     const { data, error } = await supabase
       .from('questions')
-      .insert([dbQuestion]) // Wrap dbQuestion in an array
+      .insert(dbQuestion)
       .select()
       .single();
 

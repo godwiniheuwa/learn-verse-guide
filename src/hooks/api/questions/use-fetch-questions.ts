@@ -22,75 +22,83 @@ const mapDbRecordToQuestion = (item: QuestionDBRecord): Question => {
     id: item.id,
     subject_id: item.subject_id || null,
     text: item.question_text,
-    type: item.type || 'MCQ', // Provide default if missing
+    type: item.type || 'MCQ',
     options: options,
     correct_answer: item.correct_answer,
     media_urls: mediaUrls,
-    difficulty: item.difficulty || 'medium', // Provide default if missing
+    difficulty: item.difficulty || 'medium',
     tags: tags,
+    points: item.points || 1,
     created_at: item.created_at,
     updated_at: item.updated_at,
     created_by: item.created_by
   };
 };
 
+// Fix: Split the functionality into separate functions to avoid recursive type issues
 export const useFetchQuestions = (subjectId?: string, canView: boolean = true) => {
-  const fetchQuestions = async (): Promise<Question[]> => {
-    if (!canView) {
-      return [];
-    }
-
-    let query = supabase
-      .from('questions')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (subjectId) {
-      query = query.eq('subject_id', subjectId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching questions', error);
-      throw error;
-    }
-
-    // Map database response to our frontend model
-    return (data || []).map(item => mapDbRecordToQuestion(item as QuestionDBRecord));
+  // Fetch all questions hook
+  const useAllQuestions = () => {
+    return useQuery({
+      queryKey: ['questions', subjectId],
+      queryFn: async (): Promise<Question[]> => {
+        if (!canView) {
+          return [];
+        }
+    
+        let query = supabase
+          .from('questions')
+          .select('*')
+          .order('created_at', { ascending: false });
+    
+        if (subjectId) {
+          query = query.eq('subject_id', subjectId);
+        }
+    
+        const { data, error } = await query;
+    
+        if (error) {
+          console.error('Error fetching questions', error);
+          throw error;
+        }
+    
+        // Map database response to our frontend model
+        return (data || []).map(item => mapDbRecordToQuestion(item as QuestionDBRecord));
+      },
+      enabled: canView
+    });
   };
 
-  const fetchQuestion = async (id: string): Promise<Question | null> => {
-    if (!canView) {
-      return null;
-    }
-
-    const { data, error } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      console.error(`Error fetching question ${id}`, error);
-      throw error;
-    }
-
-    // Map database response to our frontend model
-    return mapDbRecordToQuestion(data as QuestionDBRecord);
+  // Fetch single question hook
+  const useQuestion = (id: string) => {
+    return useQuery({
+      queryKey: ['questions', id],
+      queryFn: async (): Promise<Question | null> => {
+        if (!canView || !id) {
+          return null;
+        }
+    
+        const { data, error } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('id', id)
+          .single();
+    
+        if (error) {
+          console.error(`Error fetching question ${id}`, error);
+          throw error;
+        }
+    
+        // Map database response to our frontend model
+        return mapDbRecordToQuestion(data as QuestionDBRecord);
+      },
+      enabled: !!id && canView
+    });
   };
   
-  // Return separate hooks to avoid infinite recursion
+  // Return hooks
   return {
-    useAllQuestions: () => useQuery({
-      queryKey: ['questions', subjectId],
-      queryFn: fetchQuestions,
-      enabled: canView
-    }),
-    useQuestion: (id: string) => useQuery({
-      queryKey: ['questions', id],
-      queryFn: () => fetchQuestion(id),
-      enabled: !!id && canView
-    })
+    useAllQuestions,
+    useQuestion
   };
 };

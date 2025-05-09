@@ -36,12 +36,13 @@ import {
 } from "@/components/ui/select";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/use-toast";
 
 // Form schema
 const questionSchema = z.object({
   text: z.string().min(1, "Question text is required"),
   type: z.enum(["MCQ", "theory"]),
-  subject_id: z.string().optional().nullable(),
+  subject_id: z.string().nullable().optional(),
   difficulty: z.enum(["easy", "medium", "hard"]),
   options: z.array(z.string()).optional(),
   correct_answer: z.union([z.string(), z.array(z.string())]).optional(),
@@ -107,13 +108,26 @@ const QuestionFormPage = () => {
           id,
           ...cleanData,
         });
+        toast({
+          title: "Question updated",
+          description: "Your question has been successfully updated.",
+        });
       } else {
         await createQuestion.mutateAsync(cleanData as any);
+        toast({
+          title: "Question created",
+          description: "Your question has been successfully created.",
+        });
       }
 
       navigate("/questions");
     } catch (error) {
       console.error("Error saving question:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem saving your question.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -126,7 +140,7 @@ const QuestionFormPage = () => {
         subject_id: question.subject_id,
         difficulty: question.difficulty,
         options: question.options || ["", "", "", ""],
-        correct_answer: question.correct_answer,
+        correct_answer: question.correct_answer as string,
         media_urls: question.media_urls || [],
         tags: question.tags || [],
         points: question.points || 1,
