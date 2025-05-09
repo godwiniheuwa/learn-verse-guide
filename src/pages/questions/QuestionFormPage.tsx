@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
@@ -76,8 +77,8 @@ const QuestionFormPage = () => {
       subject_id: null,
       options: ["", "", "", ""],
       correct_answer: "",
-      media_urls: [],
-      tags: [],
+      media_urls: [] as string[],
+      tags: [] as string[],
       points: 1,
     },
   });
