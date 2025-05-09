@@ -44,7 +44,7 @@ export type QuestionDBInsert = {
   options?: Json | null;
   correct_answer?: string | null;
   points?: number | null;
-  // media_urls?: Json | null; - Commented out
+  // media_urls?: Json | null; - Removed
   difficulty: QuestionDifficulty;
   tags?: string[] | null;
   created_by: string;
