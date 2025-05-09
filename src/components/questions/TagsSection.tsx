@@ -21,7 +21,7 @@ export const TagsSection = ({ control }: TagsSectionProps) => {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => appendTag({ value: "" } as any)}
+          onClick={() => appendTag({ value: "" })}
         >
           <PlusIcon className="h-4 w-4 mr-2" />
           Add Tag
@@ -31,7 +31,7 @@ export const TagsSection = ({ control }: TagsSectionProps) => {
         {tagFields.map((field, index) => (
           <div key={field.id} className="flex gap-2">
             <Controller
-              name={`tags.${index}` as const}
+              name={`tags.${index}.value` as const}
               control={control}
               render={({ field }) => (
                 <Input

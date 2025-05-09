@@ -49,11 +49,30 @@ async function createAdminUserIfNotExists() {
     // Check if admin user already exists
     const { data: existingUser } = await supabase
       .from('users')
-      .select('id, email')
+      .select('id, email, is_active')
       .eq('email', adminEmail)
       .single();
     
-    if (!existingUser) {
+    if (existingUser) {
+      console.log("Admin user already exists, checking if active");
+      
+      // If admin exists but is not active, activate it
+      if (!existingUser.is_active) {
+        console.log("Activating existing admin user");
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ is_active: true })
+          .eq('id', existingUser.id);
+          
+        if (updateError) {
+          console.error("Error activating admin user:", updateError);
+        } else {
+          console.log("Admin user activated successfully");
+        }
+      }
+      
+      return existingUser.id;
+    } else {
       // Create user in Supabase auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: adminEmail,
@@ -80,7 +99,7 @@ async function createAdminUserIfNotExists() {
           name: "Admin User",
           username: "admin",
           role: "admin",
-          is_active: true,
+          is_active: true,  // Ensure admin is active by default
           password_hash: 'managed_by_supabase',
         });
 
@@ -91,9 +110,6 @@ async function createAdminUserIfNotExists() {
 
       console.log("Admin user created successfully");
       return authData.user.id;
-    } else {
-      console.log("Admin user already exists");
-      return existingUser.id;
     }
   } catch (error) {
     console.error("Error in createAdminUserIfNotExists:", error);
@@ -156,7 +172,7 @@ serve(async (req) => {
       if (adminId) {
         return new Response(
           JSON.stringify({ 
-            message: "Admin user created or already exists", 
+            message: "Admin user created or already exists and is activated", 
             credentials: { 
               email: "admin@examprep.com", 
               password: "Admin@123456" 
@@ -338,9 +354,16 @@ serve(async (req) => {
         throw new Error(`User check error: ${userError.message}`);
       }
 
-      if (!userData || !userData.is_active) {
+      if (!userData) {
         return new Response(
-          JSON.stringify({ error: "Account not active or does not exist. Please check your email for the activation link." }),
+          JSON.stringify({ error: "Account not found. Please sign up first." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+      
+      if (!userData.is_active) {
+        return new Response(
+          JSON.stringify({ error: "Account not active. Please check your email for the activation link." }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
         );
       }
