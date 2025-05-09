@@ -130,6 +130,10 @@ serve(async (req) => {
         throw new Error(`Auth error: ${authError.message}`);
       }
 
+      if (!authData || !authData.user || !authData.user.id) {
+        throw new Error("Failed to create user: No user ID returned");
+      }
+
       // Generate activation token
       const activationToken = generateToken();
       const expiresAt = new Date();

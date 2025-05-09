@@ -45,7 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (name: string, email: string, username: string, password: string) => {
     try {
-      // Use the constants instead of accessing protected properties
       const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/signup`, {
         method: 'POST',
         headers: {
@@ -68,6 +67,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return result;
     } catch (error: any) {
+      console.error('Signup error details:', error);
+      
       toast({
         title: 'Signup failed',
         description: error.message || 'Unable to create account. Try again later.',

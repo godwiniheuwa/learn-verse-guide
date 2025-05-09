@@ -11,7 +11,7 @@ interface TagsSectionProps {
 
 export const TagsSection = ({ control }: TagsSectionProps) => {
   const { fields: tagFields, append: appendTag, remove: removeTag } = 
-    useFieldArray<string>({ control, name: "tags" });
+    useFieldArray({ control, name: "tags" });
 
   return (
     <div>
@@ -21,7 +21,7 @@ export const TagsSection = ({ control }: TagsSectionProps) => {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => appendTag("")}
+          onClick={() => appendTag("" as any)}
         >
           <PlusIcon className="h-4 w-4 mr-2" />
           Add Tag

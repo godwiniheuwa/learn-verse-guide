@@ -13,7 +13,7 @@ interface QuestionOptionsSectionProps {
 
 export const QuestionOptionsSection = ({ control }: QuestionOptionsSectionProps) => {
   const { fields: optionFields, append: appendOption, remove: removeOption } = 
-    useFieldArray<string>({ control, name: "options" });
+    useFieldArray({ control, name: "options" });
 
 
   return (
@@ -25,7 +25,7 @@ export const QuestionOptionsSection = ({ control }: QuestionOptionsSectionProps)
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => appendOption("")}
+            onClick={() => appendOption("" as any)}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             Add Option
