@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -88,17 +87,7 @@ const LoginPage = () => {
       setIsSubmitting(true);
       setError(null);
       
-      // Direct login with Supabase client for more control
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-      
-      if (authError) {
-        throw new Error(authError.message);
-      }
-      
-      // Let the Auth context know about this sign in
+      // Use our login function from the auth context
       await login(data.email, data.password);
       navigate('/dashboard');
     } catch (err: any) {

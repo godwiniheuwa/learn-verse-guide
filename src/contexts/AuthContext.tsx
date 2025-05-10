@@ -1,190 +1,20 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import React, { createContext, useContext, useState } from 'react';
 import { AuthContextType } from '@/types/auth';
 import { useAuthState } from '@/hooks/use-auth-state';
-import { 
-  loginWithEmail, 
-  signupWithEmail, 
-  requestPasswordReset, 
-  resetPasswordWithToken, 
-  signOut 
-} from '@/services/auth.service';
-
-// Import constants directly from the client file
-import { supabase } from '@/integrations/supabase/client';
-
-// Define these constants to match what's in the supabase client file
-const SUPABASE_URL = "https://lemshjwutppclhhboeae.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA";
+import { useLogin, useSignup, usePasswordReset, useLogout } from '@/hooks/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading, checkUser } = useAuthState();
-  const { toast } = useToast();
-  const [authError, setAuthError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Check for current user immediately
-    checkUser();
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    try {
-      setAuthError(null);
-      const result = await loginWithEmail(email, password);
-      await checkUser();
-      
-      toast({
-        title: 'Login successful',
-        description: `Welcome back${user ? ', ' + user.name : ''}!`,
-      });
-      
-      return result;
-    } catch (error: any) {
-      const errorMessage = error.message || 'Check your credentials and try again.';
-      setAuthError(errorMessage);
-      
-      toast({
-        title: 'Login failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  };
-
-  const signup = async (name: string, email: string, username: string, password: string) => {
-    try {
-      setAuthError(null);
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ name, email, username, password }),
-      });
-      
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Signup failed');
-      }
-      
-      toast({
-        title: 'Account created',
-        description: result.message || 'Please check your email to activate your account.',
-      });
-      
-      return result;
-    } catch (error: any) {
-      console.error('Signup error details:', error);
-      setAuthError(error.message || 'Unable to create account. Try again later.');
-      
-      toast({
-        title: 'Signup failed',
-        description: error.message || 'Unable to create account. Try again later.',
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  };
-
-  const forgotPassword = async (email: string) => {
-    try {
-      setAuthError(null);
-      // Use the constants instead of accessing protected properties
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/forgot-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ email }),
-      });
-      
-      const result = await response.json();
-      
-      if (!response.ok && result.error) {
-        throw new Error(result.error);
-      }
-      
-      toast({
-        title: 'Password reset email sent',
-        description: result.message || 'If your email is registered, you will receive a password reset link.',
-      });
-      
-      return result;
-    } catch (error: any) {
-      setAuthError(error.message || 'Unable to process your request. Try again later.');
-      toast({
-        title: 'Request failed',
-        description: error.message || 'Unable to process your request. Try again later.',
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  };
-
-  const resetPassword = async (token: string, password: string) => {
-    try {
-      setAuthError(null);
-      // Use the constants instead of accessing protected properties
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ token, password }),
-      });
-      
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Password reset failed');
-      }
-      
-      toast({
-        title: 'Password reset successful',
-        description: result.message || 'You can now login with your new password.',
-      });
-      
-      return result;
-    } catch (error: any) {
-      setAuthError(error.message || 'Unable to reset password. Try again later.');
-      toast({
-        title: 'Reset failed',
-        description: error.message || 'Unable to reset password. Try again later.',
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  };
-
-  const logout = async () => {
-    try {
-      setAuthError(null);
-      await signOut();
-      
-      // Force refresh the auth state
-      await checkUser();
-      
-      toast({
-        title: 'Logged out',
-        description: 'You have been logged out successfully.',
-      });
-    } catch (error: any) {
-      setAuthError(error.message || 'Failed to log out. Try again.');
-      toast({
-        title: 'Error',
-        description: 'Failed to log out. Try again.',
-        variant: 'destructive',
-      });
-    }
-  };
+  const { login, authError: loginError } = useLogin(checkUser);
+  const { signup, authError: signupError } = useSignup();
+  const { forgotPassword, resetPassword, authError: passwordResetError } = usePasswordReset();
+  const { logout, authError: logoutError } = useLogout(checkUser);
+  
+  // Combine all auth errors
+  const authError = loginError || signupError || passwordResetError || logoutError;
 
   return (
     <AuthContext.Provider value={{ 
