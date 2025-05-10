@@ -1,8 +1,8 @@
 
 // API configuration
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://yourdomain.com/backend' // Change to your actual production domain
-  : 'http://localhost/backend'; // Local development URL
+  ? '/api' // Production path (relative to domain root)
+  : '/api'; // Development path
 
 export const API_URL = API_BASE_URL;
 

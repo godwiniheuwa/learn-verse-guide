@@ -1,29 +1,69 @@
 
+import { useState, useEffect } from 'react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { AlertMessage } from '@/components/ui/alert-message';
-import { useLoginForm, type LoginFormValues } from '@/hooks/auth/use-login-form';
-import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+// Define the login form schema
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginForm = () => {
-  const { 
-    form, 
-    isSubmitting, 
-    error, 
-    setError, 
-    successMessage, 
-    setSuccessMessage, 
-    adminCreated,
-    serverResponding,
-    onSubmit 
-  } = useLoginForm();
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   
-  // Login attempts tracking
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [showAdminHint, setShowAdminHint] = useState(false);
+  const [serverResponding, setServerResponding] = useState<boolean | null>(null);
+  
+  // Check if the user just created an admin account
+  const [adminCreated, setAdminCreated] = useState(false);
+  
+  // Form hook
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
+  // Check for query parameters to show appropriate messages
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    
+    if (params.get('activated') === 'true') {
+      setSuccessMessage('Your account has been activated successfully. You can now log in.');
+    } else if (params.get('reset') === 'success') {
+      setSuccessMessage('Your password has been reset successfully. You can now log in with your new password.');
+    } else if (params.get('admin') === 'created') {
+      setSuccessMessage('Admin account created successfully. You can log in with the provided credentials.');
+      setAdminCreated(true);
+      
+      // Pre-fill the form with admin credentials
+      form.setValue('email', 'admin@examprep.com');
+      form.setValue('password', 'Admin@123456');
+    }
+    
+    // Check server connectivity
+    checkServerConnectivity();
+  }, [location.search]);
+  
   // Show admin hint after multiple failed attempts
   useEffect(() => {
     if (loginAttempts >= 3 && error) {
@@ -31,17 +71,39 @@ export const LoginForm = () => {
     }
   }, [loginAttempts, error]);
 
-  // Handle form submission with attempt tracking
-  const handleSubmit = async (values: LoginFormValues) => {
-    setLoginAttempts(prev => prev + 1);
-    
-    // For debugging on third attempt
-    if (loginAttempts >= 2) {
-      console.log("Multiple login attempts detected. Form values:", values);
-      console.log("Current auth state:", { isSubmitting, error, successMessage });
+  // Check if the backend server is responding
+  const checkServerConnectivity = async () => {
+    try {
+      const resp = await fetch("/api/auth/validate", {
+        method: 'GET',
+      });
+      
+      setServerResponding(resp.status !== 404);
+    } catch (err) {
+      console.error("Could not connect to API:", err);
+      setServerResponding(false);
     }
-    
-    await onSubmit(values);
+  };
+
+  // Handle form submission with attempt tracking
+  const onSubmit = async (values: LoginFormValues) => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      setLoginAttempts(prev => prev + 1);
+      
+      // For debugging on third attempt
+      if (loginAttempts >= 2) {
+        console.log("Multiple login attempts detected. Form values:", values);
+      }
+      
+      await login(values.email, values.password);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -85,7 +147,7 @@ export const LoginForm = () => {
       )}
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
             name="email"
@@ -97,7 +159,6 @@ export const LoginForm = () => {
                     type="email" 
                     placeholder="you@example.com" 
                     {...field} 
-                    defaultValue={adminCreated ? "admin@examprep.com" : ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -116,7 +177,6 @@ export const LoginForm = () => {
                     type="password" 
                     placeholder="••••••••" 
                     {...field}
-                    defaultValue={adminCreated ? "Admin@123456" : ""}
                   />
                 </FormControl>
                 <FormMessage />

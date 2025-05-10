@@ -1,130 +1,120 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Link } from 'react-router-dom';
 import { AlertMessage } from '@/components/ui/alert-message';
-import { Loader2 } from 'lucide-react';
-
-// Use these constants instead of accessing supabase.supabaseUrl and supabase.supabaseKey
-const SUPABASE_URL = "https://lemshjwutppclhhboeae.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA";
+import { Loader2, CheckCircle2 } from 'lucide-react';
+import { createAdminUser } from '@/services/auth.service';
+import { motion } from 'framer-motion';
 
 const CreateAdminPage = () => {
-  const [loading, setLoading] = useState(false);
-  const [adminCredentials, setAdminCredentials] = useState<{email: string, password: string} | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    // Try to create admin automatically when the page loads
-    createAdminUser();
-  }, []);
-
-  const createAdminUser = async () => {
+  const [credentials, setCredentials] = useState<{ email: string; password: string } | null>(null);
+  const navigate = useNavigate();
+  
+  const handleCreateAdmin = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
       
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/create-admin`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        }
+      const result = await createAdminUser();
+      setCredentials({
+        email: result.credentials.email,
+        password: result.credentials.password
       });
+      setIsComplete(true);
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create admin user');
-      }
-      
-      setAdminCredentials(data.credentials);
-      
-      toast({
-        title: 'Success',
-        description: 'Admin user created or already exists and is activated',
-      });
-    } catch (error: any) {
-      console.error("Error creating admin:", error);
-      setError(error.message || 'Failed to create admin user');
-      
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create admin user',
-        variant: 'destructive',
-      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to create admin user. Please try again later.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-
+  
+  const goToLogin = () => {
+    navigate('/login?admin=created');
+  };
+  
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Admin User Setup</CardTitle>
-          <CardDescription className="text-center">
-            Create an admin user for testing purposes
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <AlertMessage
-              type="error"
-              title="Error"
-              message={error}
-              onHide={() => setError(null)}
-            />
-          )}
-          
-          <Button 
-            onClick={createAdminUser} 
-            disabled={loading} 
-            className="w-full"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating admin...
-              </>
-            ) : (
-              'Create/Activate Admin User'
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Create Admin Account</CardTitle>
+            <CardDescription className="text-center">
+              Creates a default admin user for the system
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <AlertMessage
+                type="error"
+                title="Error"
+                message={error}
+                onHide={() => setError(null)}
+              />
             )}
-          </Button>
-          
-          {adminCredentials && (
-            <div className="mt-4 p-4 border rounded-md bg-muted">
-              <h3 className="font-medium mb-2">Admin Credentials</h3>
-              <p><strong>Email:</strong> {adminCredentials.email}</p>
-              <p><strong>Password:</strong> {adminCredentials.password}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                These credentials can be used to log in immediately.
-              </p>
-            </div>
-          )}
-          
-          {adminCredentials && (
-            <Button 
-              variant="outline" 
-              asChild 
-              className="w-full"
-            >
-              <Link to="/login">
-                Go to Login Page
-              </Link>
-            </Button>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          {!adminCredentials && (
-            <Link to="/login" className="text-primary hover:underline">
-              Back to Login Page
-            </Link>
-          )}
-        </CardFooter>
-      </Card>
+            
+            {isComplete ? (
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <CheckCircle2 className="h-16 w-16 text-green-500" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold">Admin Created Successfully</h3>
+                  <p>Use the following credentials to log in:</p>
+                  <div className="bg-muted p-4 rounded-md text-left">
+                    <p><span className="font-semibold">Email:</span> {credentials?.email}</p>
+                    <p><span className="font-semibold">Password:</span> {credentials?.password}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    Make sure to change this password after logging in.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-center">
+                  This will create an admin user if one doesn't already exist.
+                  You can use this account to manage the entire application.
+                </p>
+                <Button 
+                  onClick={handleCreateAdmin} 
+                  className="w-full" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating admin...
+                    </>
+                  ) : (
+                    'Create Admin Account'
+                  )}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            {isComplete ? (
+              <Button onClick={goToLogin} className="w-full">
+                Go to Login
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => navigate('/login')} className="w-full">
+                Back to Login
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      </motion.div>
     </div>
   );
 };

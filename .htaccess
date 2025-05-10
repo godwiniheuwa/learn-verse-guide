@@ -1,0 +1,35 @@
+
+# Enable URL rewriting
+RewriteEngine On
+
+# Set the base directory
+RewriteBase /
+
+# Redirect API requests to the PHP backend
+RewriteRule ^api/(.*)$ api/$1 [L]
+
+# Don't rewrite if the file or directory exists
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# For all other requests, serve the index.html file
+RewriteRule ^(.*)$ index.html [L,QSA]
+
+# Add correct MIME types
+AddType application/javascript .js
+AddType text/css .css
+
+# Enable CORS
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+</IfModule>
+
+# PHP Settings
+<IfModule mod_php8.c>
+    php_flag display_errors off
+    php_value upload_max_filesize 10M
+    php_value post_max_size 20M
+    php_value memory_limit 256M
+</IfModule>

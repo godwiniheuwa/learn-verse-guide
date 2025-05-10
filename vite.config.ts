@@ -13,8 +13,9 @@ export default defineConfig({
   },
   // Configure to work with PHP backend
   server: {
+    port: 8080,
     proxy: {
-      '/backend': {
+      '/api': {
         target: 'http://localhost', // Local PHP server
         changeOrigin: true,
       },

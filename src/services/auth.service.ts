@@ -2,9 +2,6 @@
 import { User } from '@/types/auth';
 import { API_URL } from '@/config';
 
-// API base URL (will be defined in config.ts)
-const AUTH_API = `${API_URL}/auth`;
-
 /**
  * Fetch user data from the database
  */
@@ -55,7 +52,7 @@ export const loginWithEmail = async (email: string, password: string) => {
   try {
     console.log("Starting login process for:", email);
     
-    const response = await fetch(`${AUTH_API}/login`, {
+    const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -91,7 +88,7 @@ export const loginWithEmail = async (email: string, password: string) => {
  */
 export const signupWithEmail = async (name: string, email: string, username: string, password: string) => {
   try {
-    const response = await fetch(`${AUTH_API}/signup`, {
+    const response = await fetch(`${API_URL}/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -113,64 +110,12 @@ export const signupWithEmail = async (name: string, email: string, username: str
 };
 
 /**
- * Request password reset
- */
-export const requestPasswordReset = async (email: string) => {
-  try {
-    const response = await fetch(`${AUTH_API}/forgot-password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
-    
-    const result = await response.json();
-    
-    if (!response.ok && result.error) {
-      throw new Error(result.error);
-    }
-    
-    return result;
-  } catch (error: any) {
-    console.error('Error requesting password reset:', error);
-    throw error;
-  }
-};
-
-/**
- * Reset password with token
- */
-export const resetPasswordWithToken = async (token: string, password: string) => {
-  try {
-    const response = await fetch(`${AUTH_API}/reset-password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token, password }),
-    });
-    
-    const result = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(result.error || 'Password reset failed');
-    }
-    
-    return result;
-  } catch (error: any) {
-    console.error('Error resetting password:', error);
-    throw error;
-  }
-};
-
-/**
  * Sign out user
  */
 export const signOut = async () => {
   try {
     // Call logout endpoint
-    await fetch(`${AUTH_API}/logout`, {
+    await fetch(`${API_URL}/auth/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -184,6 +129,31 @@ export const signOut = async () => {
     return true;
   } catch (error: any) {
     console.error('Error logging out:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create admin user
+ */
+export const createAdminUser = async () => {
+  try {
+    const response = await fetch(`${API_URL}/auth/create-admin`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to create admin user');
+    }
+    
+    return result;
+  } catch (error: any) {
+    console.error('Error creating admin user:', error);
     throw error;
   }
 };
