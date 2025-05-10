@@ -1,0 +1,23 @@
+
+# Enable URL rewriting
+RewriteEngine On
+
+# Handle CORS preflight requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# Handle API requests
+RewriteRule ^auth/signup$ api/auth/signup.php [L]
+RewriteRule ^auth/login$ api/auth/login.php [L]
+RewriteRule ^auth/logout$ api/auth/logout.php [L]
+RewriteRule ^auth/activate$ api/auth/activate.php [QSA,L]
+RewriteRule ^auth/forgot-password$ api/auth/forgot-password.php [L]
+RewriteRule ^auth/reset-password$ api/auth/reset-password.php [QSA,L]
+RewriteRule ^auth/create-admin$ api/auth/create-admin.php [L]
+RewriteRule ^auth/validate$ api/auth/validate.php [L]
+RewriteRule ^user/get$ api/user/get.php [L]
+
+# All other requests go to index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.html [QSA,L]

@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/auth';
 import { fetchUserData } from '@/services/auth.service';
+import { API_URL } from '@/config';
 
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -13,29 +14,51 @@ export const useAuthState = () => {
     try {
       setLoading(true);
       
-      // Get session from Supabase auth
-      console.log("Checking for existing session");
-      const { data: { session } } = await supabase.auth.getSession();
+      // Get JWT token from localStorage
+      const token = localStorage.getItem('auth_token');
       
-      if (session?.user?.id) {
-        console.log("Found existing session, fetching user data...");
-        const userData = await fetchUserData(session.user.id);
+      if (!token) {
+        console.log("No auth token found");
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      
+      // Validate token with the backend
+      console.log("Checking token validity");
+      const response = await fetch(`${API_URL}/auth/validate`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.valid && data.user) {
+        console.log("Token valid, fetching user data");
+        const userData = await fetchUserData(data.user.id);
         
         if (userData) {
           setUser(userData);
           console.log("User data loaded:", userData);
         } else {
-          console.log("Session exists but no user record found. May need to create one.");
-          // Keep the auth session but note missing user record
+          console.log("No user data found");
           setUser(null);
+          // Clear invalid token
+          localStorage.removeItem('auth_token');
         }
       } else {
-        console.log("No active session found");
+        console.log("Invalid token, clearing auth state");
         setUser(null);
+        // Clear invalid token
+        localStorage.removeItem('auth_token');
       }
     } catch (error) {
       console.error('Error checking user:', error);
       setUser(null);
+      // Clear token on error
+      localStorage.removeItem('auth_token');
     } finally {
       setLoading(false);
     }
@@ -43,47 +66,20 @@ export const useAuthState = () => {
 
   useEffect(() => {
     console.log("Setting up auth state handler");
-
-    // Set up auth state listener FIRST before anything else
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.id);
-        
-        if (session?.user?.id) {
-          // Only update user if session exists
-          try {
-            console.log("Auth state changed with user, fetching user data");
-            // Use setTimeout to prevent recursive update issues
-            setTimeout(async () => {
-              try {
-                const userData = await fetchUserData(session.user.id);
-                setUser(userData);
-                console.log("User data fetched on auth change:", userData);
-              } catch (error) {
-                console.error("Error fetching user data on auth change:", error);
-                setUser(null);
-              }
-            }, 0);
-          } catch (error) {
-            console.error("Error in auth change handler:", error);
-          }
-        } else {
-          console.log("No session found in auth change, clearing user");
-          setUser(null);
-        }
-        
-        if (!authInitialized) {
-          setAuthInitialized(true);
-        }
-      }
-    );
-
-    // THEN check for existing session
     checkUser();
-
+    
+    // Listen for storage events (for multi-tab support)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'auth_token') {
+        console.log("Auth token changed in storage, refreshing auth state");
+        checkUser();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
-      console.log("Cleaning up auth state subscription");
-      subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
