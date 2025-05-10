@@ -23,7 +23,7 @@ import { QuestionDetailsSection } from "@/components/questions/QuestionDetailsSe
 import { QuestionOptionsSection } from "@/components/questions/QuestionOptionsSection";
 import { TheoryAnswerSection } from "@/components/questions/TheoryAnswerSection";
 import { TagsSection } from "@/components/questions/TagsSection";
-import { questionSchema, FormValues } from "@/components/questions/QuestionFormTypes";
+import { questionSchema, FormValues, QuestionFormData } from "@/components/questions/QuestionFormTypes";
 
 const QuestionFormPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,9 +46,9 @@ const QuestionFormPage = () => {
       type: "MCQ",
       difficulty: "medium",
       subject_id: null,
-      options: ["", "", "", ""],
+      options: [{ value: "" }, { value: "" }, { value: "" }, { value: "" }],
       correct_answer: "",
-      tags: [] as string[],
+      tags: [],
       points: 1,
     },
   });
@@ -56,25 +56,31 @@ const QuestionFormPage = () => {
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     try {
-      // Clean up empty fields
-      const cleanData = {
-        ...data,
-        options: data.options?.filter(o => o.trim() !== "") || [],
-        tags: data.tags?.filter(t => t.trim() !== "") || [],
+      // Convert form values to API format
+      const apiData: QuestionFormData = {
+        text: data.text,
+        type: data.type,
+        subject_id: data.subject_id,
+        difficulty: data.difficulty,
+        // Extract value from options objects
+        options: data.options.filter(opt => opt.value.trim() !== "").map(opt => opt.value),
+        correct_answer: data.correct_answer,
+        // Extract value from tags objects
+        tags: data.tags.filter(tag => tag.value.trim() !== "").map(tag => tag.value),
         points: data.points || 1,
       };
 
       if (isEditing && id) {
         await updateQuestion.mutateAsync({
           id,
-          ...cleanData,
+          ...apiData,
         });
         toast({
           title: "Question updated",
           description: "Your question has been successfully updated.",
         });
       } else {
-        await createQuestion.mutateAsync(cleanData as any);
+        await createQuestion.mutateAsync(apiData);
         toast({
           title: "Question created",
           description: "Your question has been successfully created.",
@@ -95,14 +101,21 @@ const QuestionFormPage = () => {
   // Set form values when editing existing question
   useEffect(() => {
     if (isEditing && question) {
+      // Convert API data format to form format
       form.reset({
         text: question.text,
         type: question.type,
         subject_id: question.subject_id,
         difficulty: question.difficulty,
-        options: question.options || ["", "", "", ""],
+        // Convert string array to array of objects with value property
+        options: question.options ? 
+          question.options.map(option => ({ value: option })) : 
+          [{ value: "" }, { value: "" }, { value: "" }, { value: "" }],
         correct_answer: question.correct_answer as string,
-        tags: question.tags || [],
+        // Convert string array to array of objects with value property
+        tags: question.tags ? 
+          question.tags.map(tag => ({ value: tag })) : 
+          [],
         points: question.points || 1,
       });
     }

@@ -7,11 +7,10 @@ export type NewQuestion = {
   exam_id?: string | null;
   text: string; // This maps to question_text in DB
   type: QuestionType;
-  options?: string[] | null;
+  options?: string[] | null; // Changed to string[] to match API expectations
   correct_answer?: string | string[] | null;
-  // Removed media_urls property
   difficulty: QuestionDifficulty;
-  tags?: string[] | null;
+  tags?: string[] | null; // Changed to string[] to match API expectations
   points?: number | null;
 };
 
@@ -44,7 +43,6 @@ export type QuestionDBInsert = {
   options?: Json | null;
   correct_answer?: string | null;
   points?: number | null;
-  // media_urls?: Json | null; - Removed
   difficulty: QuestionDifficulty;
   tags?: string[] | null;
   created_by: string;

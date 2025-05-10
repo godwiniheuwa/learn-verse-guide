@@ -12,7 +12,7 @@ export type AuthContextType = {
   user: User | null;
   loading: boolean;
   authError?: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<any>; // Changed to Promise<any> to accommodate Supabase's return type
   signup: (name: string, email: string, username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;

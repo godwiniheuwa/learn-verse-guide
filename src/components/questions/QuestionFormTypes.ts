@@ -31,8 +31,8 @@ export interface QuestionFormData {
   type: QuestionType;
   subject_id: string | null;
   difficulty: QuestionDifficulty;
-  options?: { value: string }[];
+  options?: string[]; // Changed to string[] to match the API expectations
   correct_answer?: string | string[];
-  tags?: { value: string }[];
+  tags?: string[]; // Changed to string[] to match the API expectations
   points?: number;
 }
