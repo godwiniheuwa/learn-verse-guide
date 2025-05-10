@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/auth';
 
@@ -45,39 +44,53 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
  */
 export const loginWithEmail = async (email: string, password: string) => {
   try {
+    console.log("Starting login process for:", email);
+    
     // First, check if the user exists and is active
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('is_active')
+      .select('is_active, email')
       .eq('email', email)
       .maybeSingle();
     
+    console.log("User lookup result:", userData);
+    
     if (userError) {
       console.error('Error checking user:', userError);
+      throw new Error("Error checking user account. Please try again.");
     }
     
     if (!userData) {
-      throw new Error("Account not found. Please sign up first.");
+      console.error("Account not found for email:", email);
+      throw new Error("Account not found. Please check your email or sign up first.");
     }
     
     if (!userData.is_active) {
+      console.error("Account not active for email:", email);
       throw new Error("Account not active. Please check your email for the activation link.");
     }
     
     // Now try to sign in with Supabase auth
+    console.log("Attempting Supabase auth for email:", email);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     
     if (error) {
-      console.error('Login error:', error);
-      throw error;
+      console.error('Supabase login error:', error);
+      
+      if (error.message.includes("Invalid login credentials")) {
+        throw new Error("Invalid email or password. Please try again.");
+      } else {
+        throw error;
+      }
     }
     
+    console.log("Login successful:", !!data);
     return data;
   } catch (error: any) {
-    console.error('Error logging in:', error);
+    console.error('Error in loginWithEmail:', error);
     throw error;
   }
 };

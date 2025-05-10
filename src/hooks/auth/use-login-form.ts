@@ -31,6 +31,7 @@ export const useLoginForm = () => {
   });
 
   useEffect(() => {
+    console.log("Login form component initialized");
     // Check for query parameters to show appropriate messages
     const params = new URLSearchParams(location.search);
     
@@ -43,6 +44,7 @@ export const useLoginForm = () => {
     // Try to create/activate admin account automatically
     const createAdminAccount = async () => {
       try {
+        console.log("Attempting to create/activate admin account");
         const SUPABASE_URL = "https://lemshjwutppclhhboeae.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA";
         
@@ -50,28 +52,33 @@ export const useLoginForm = () => {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
           }
         });
         
         const data = await response.json();
+        console.log("Admin creation response:", data);
         
         if (response.ok) {
-          console.log("Admin user created or activated:", data);
           setAdminCreated(true);
           setSuccessMessage(prev => 
             (prev ? `${prev} ` : '') + 
             'Admin account is ready. You can log in with admin@examprep.com and password Admin@123456'
           );
+        } else {
+          console.error("Admin creation failed:", data.error);
         }
       } catch (error) {
         console.error("Error creating admin:", error);
       }
     };
     
-    createAdminAccount();
+    // Temporarily disable automatic admin creation
+    // createAdminAccount();
     
     // Redirect if user is already logged in
     if (user) {
+      console.log("User already logged in, redirecting to dashboard");
       navigate('/dashboard');
     }
   }, [location.search, user, navigate]);
@@ -81,11 +88,14 @@ export const useLoginForm = () => {
       setIsSubmitting(true);
       setError(null);
       
+      console.log("Form submitted, attempting login with:", data.email);
+      
       // Use our login function from the auth context
       await login(data.email, data.password);
+      console.log("Login successful, redirecting to dashboard");
       navigate('/dashboard');
     } catch (err: any) {
-      console.error("Login error:", err);
+      console.error("Login submission error:", err);
       
       // More specific error messages
       if (err.message.includes("Email not confirmed")) {

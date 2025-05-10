@@ -11,7 +11,10 @@ export const useLogin = (checkUser: () => Promise<void>) => {
   const login = async (email: string, password: string) => {
     try {
       setAuthError(null);
+      console.log("Login attempt started for email:", email);
+      
       const result = await loginWithEmail(email, password);
+      console.log("Login successful, checking user...");
       await checkUser();
       
       toast({
@@ -21,6 +24,7 @@ export const useLogin = (checkUser: () => Promise<void>) => {
       
       return result;
     } catch (error: any) {
+      console.error("Login error details:", error);
       const errorMessage = error.message || 'Check your credentials and try again.';
       setAuthError(errorMessage);
       

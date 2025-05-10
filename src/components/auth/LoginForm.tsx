@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { AlertMessage } from '@/components/ui/alert-message';
 import { useLoginForm, type LoginFormValues } from '@/hooks/auth/use-login-form';
+import { useState } from 'react';
 
 export const LoginForm = () => {
   const { 
@@ -17,6 +18,22 @@ export const LoginForm = () => {
     adminCreated,
     onSubmit 
   } = useLoginForm();
+  
+  // Login attempts tracking
+  const [loginAttempts, setLoginAttempts] = useState(0);
+
+  // Handle form submission with attempt tracking
+  const handleSubmit = async (values: LoginFormValues) => {
+    setLoginAttempts(prev => prev + 1);
+    
+    // For debugging on third attempt
+    if (loginAttempts >= 2) {
+      console.log("Multiple login attempts detected. Form values:", values);
+      console.log("Current auth state:", { isSubmitting, error, successMessage });
+    }
+    
+    await onSubmit(values);
+  };
 
   return (
     <>
@@ -41,7 +58,7 @@ export const LoginForm = () => {
       )}
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <FormField
             control={form.control}
             name="email"
