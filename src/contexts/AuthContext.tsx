@@ -1,13 +1,20 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import { AuthContextType } from '@/types/auth';
 import { useAuthState } from '@/hooks/use-auth-state';
-import { useLogin, useSignup, usePasswordReset, useLogout } from '@/hooks/auth';
+import { useLogin } from '@/hooks/auth/use-login';
+import { useSignup } from '@/hooks/auth/use-signup';
+import { usePasswordReset } from '@/hooks/auth/use-password-reset';
+import { useLogout } from '@/hooks/auth/use-logout';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading, checkUser } = useAuthState();
+  // First get the auth state (user, loading, checkUser)
+  const authState = useAuthState();
+  const { user, loading, checkUser } = authState;
+  
+  // Then use these hooks consistently in the same order every render
   const { login, authError: loginError } = useLogin(checkUser);
   const { signup, authError: signupError } = useSignup();
   const { forgotPassword, resetPassword, authError: passwordResetError } = usePasswordReset();

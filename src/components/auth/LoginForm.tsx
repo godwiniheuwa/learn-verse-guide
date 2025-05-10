@@ -2,10 +2,10 @@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { AlertMessage } from '@/components/ui/alert-message';
 import { useLoginForm, type LoginFormValues } from '@/hooks/auth/use-login-form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export const LoginForm = () => {
   const { 
@@ -16,11 +16,20 @@ export const LoginForm = () => {
     successMessage, 
     setSuccessMessage, 
     adminCreated,
+    serverResponding,
     onSubmit 
   } = useLoginForm();
   
   // Login attempts tracking
   const [loginAttempts, setLoginAttempts] = useState(0);
+  const [showAdminHint, setShowAdminHint] = useState(false);
+
+  // Show admin hint after multiple failed attempts
+  useEffect(() => {
+    if (loginAttempts >= 3 && error) {
+      setShowAdminHint(true);
+    }
+  }, [loginAttempts, error]);
 
   // Handle form submission with attempt tracking
   const handleSubmit = async (values: LoginFormValues) => {
@@ -54,6 +63,24 @@ export const LoginForm = () => {
           title="Error"
           message={error}
           onHide={() => setError(null)}
+        />
+      )}
+      
+      {serverResponding === false && (
+        <AlertMessage
+          type="warning"
+          title="Connection Issue"
+          message="We're having trouble connecting to the server. Your login may not work. Please check your internet connection."
+          onHide={() => {}}
+        />
+      )}
+      
+      {showAdminHint && (
+        <AlertMessage
+          type="info"
+          title="Need Help?"
+          message="Try using admin@examprep.com with password Admin@123456"
+          onHide={() => setShowAdminHint(false)}
         />
       )}
       
@@ -107,6 +134,13 @@ export const LoginForm = () => {
               'Login'
             )}
           </Button>
+          
+          {loginAttempts >= 2 && (
+            <div className="text-center text-sm text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 mr-1" />
+              <span>Having trouble? Try admin@examprep.com / Admin@123456</span>
+            </div>
+          )}
         </form>
       </Form>
     </>

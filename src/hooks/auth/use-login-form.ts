@@ -21,6 +21,7 @@ export const useLoginForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [adminCreated, setAdminCreated] = useState(false);
+  const [serverResponding, setServerResponding] = useState<boolean | null>(null);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -29,6 +30,33 @@ export const useLoginForm = () => {
       password: '',
     },
   });
+
+  // Check server connectivity
+  useEffect(() => {
+    const checkServerConnectivity = async () => {
+      try {
+        // Simple check to see if we can hit the Supabase API
+        const resp = await fetch("https://lemshjwutppclhhboeae.supabase.co/rest/v1/", {
+          headers: {
+            "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA"
+          }
+        });
+        
+        if (resp.status >= 200 && resp.status < 500) {
+          setServerResponding(true);
+          console.log("Supabase API is responding");
+        } else {
+          setServerResponding(false);
+          console.error("Supabase API returned error status:", resp.status);
+        }
+      } catch (err) {
+        setServerResponding(false);
+        console.error("Could not connect to Supabase API:", err);
+      }
+    };
+    
+    checkServerConnectivity();
+  }, []);
 
   useEffect(() => {
     console.log("Login form component initialized");
@@ -40,41 +68,6 @@ export const useLoginForm = () => {
     } else if (params.get('reset') === 'success') {
       setSuccessMessage('Your password has been reset successfully. You can now log in with your new password.');
     }
-    
-    // Try to create/activate admin account automatically
-    const createAdminAccount = async () => {
-      try {
-        console.log("Attempting to create/activate admin account");
-        const SUPABASE_URL = "https://lemshjwutppclhhboeae.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA";
-        
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/create-admin`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        const data = await response.json();
-        console.log("Admin creation response:", data);
-        
-        if (response.ok) {
-          setAdminCreated(true);
-          setSuccessMessage(prev => 
-            (prev ? `${prev} ` : '') + 
-            'Admin account is ready. You can log in with admin@examprep.com and password Admin@123456'
-          );
-        } else {
-          console.error("Admin creation failed:", data.error);
-        }
-      } catch (error) {
-        console.error("Error creating admin:", error);
-      }
-    };
-    
-    // Temporarily disable automatic admin creation
-    // createAdminAccount();
     
     // Redirect if user is already logged in
     if (user) {
@@ -90,6 +83,10 @@ export const useLoginForm = () => {
       
       console.log("Form submitted, attempting login with:", data.email);
       
+      if (!serverResponding) {
+        console.warn("Server connectivity issues detected before login attempt");
+      }
+      
       // Use our login function from the auth context
       await login(data.email, data.password);
       console.log("Login successful, redirecting to dashboard");
@@ -103,7 +100,11 @@ export const useLoginForm = () => {
       } else if (err.message.includes("Invalid login credentials")) {
         setError("Invalid email or password. Please try again.");
       } else if (err.message.includes("not active")) {
-        setError("Your account is not active. Please check your email for the activation link or create an admin account.");
+        setError("Your account is not active. Please check your email for the activation link or contact an administrator.");
+      } else if (err.message.includes("not found")) {
+        setError("Account not found. You may need to sign up first or check your email address.");
+      } else if (!serverResponding) {
+        setError("Unable to connect to the server. Please check your internet connection and try again.");
       } else {
         setError(err.message || 'Login failed. Please check your credentials and try again.');
       }
@@ -120,6 +121,7 @@ export const useLoginForm = () => {
     successMessage,
     setSuccessMessage,
     adminCreated,
+    serverResponding,
     onSubmit
   };
 };

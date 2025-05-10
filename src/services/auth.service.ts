@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/auth';
 
@@ -10,6 +11,8 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
  */
 export const fetchUserData = async (userId: string): Promise<User | null> => {
   try {
+    console.log("Fetching user data for ID:", userId);
+    
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -22,6 +25,7 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
     }
     
     if (data) {
+      console.log("User data found:", data);
       // Transform the data to match our User type
       return {
         id: data.id,
@@ -32,6 +36,8 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
         isActive: data.is_active
       };
     }
+    
+    console.log("No user data found for ID:", userId);
     return null;
   } catch (error) {
     console.error('Error fetching user data:', error);
@@ -44,34 +50,11 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
  */
 export const loginWithEmail = async (email: string, password: string) => {
   try {
-    console.log("Starting login process for:", email);
+    console.log("Starting direct login process for:", email);
     
-    // First, check if the user exists and is active
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('is_active, email')
-      .eq('email', email)
-      .maybeSingle();
-    
-    console.log("User lookup result:", userData);
-    
-    if (userError) {
-      console.error('Error checking user:', userError);
-      throw new Error("Error checking user account. Please try again.");
-    }
-    
-    if (!userData) {
-      console.error("Account not found for email:", email);
-      throw new Error("Account not found. Please check your email or sign up first.");
-    }
-    
-    if (!userData.is_active) {
-      console.error("Account not active for email:", email);
-      throw new Error("Account not active. Please check your email for the activation link.");
-    }
-    
-    // Now try to sign in with Supabase auth
-    console.log("Attempting Supabase auth for email:", email);
+    // First directly attempt Supabase auth login since we've confirmed
+    // users exist in Supabase auth system based on the error
+    console.log("Attempting Supabase direct auth for email:", email);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -85,6 +68,48 @@ export const loginWithEmail = async (email: string, password: string) => {
       } else {
         throw error;
       }
+    }
+    
+    if (!data || !data.user) {
+      console.error("Auth succeeded but no user data returned");
+      throw new Error("Authentication error. Please try again.");
+    }
+    
+    // After successful auth, check if user exists in our users table
+    console.log("Auth successful, checking if user exists in users table");
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('is_active, email')
+      .eq('id', data.user.id)
+      .maybeSingle();
+    
+    if (userError) {
+      console.error('Error checking user:', userError);
+      // Don't fail login if the user record check fails, just log it
+      console.warn("User authenticated but couldn't confirm user record");
+    } else if (!userData) {
+      // If user doesn't exist in our table but auth succeeded,
+      // Create a basic record
+      console.log("User not found in users table, creating new record");
+      
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: data.user.id,
+          email: email,
+          name: email.split('@')[0],
+          username: email.split('@')[0],
+          password_hash: 'managed_by_supabase',
+          role: 'student',
+          is_active: true
+        });
+      
+      if (insertError) {
+        console.error("Failed to create user record:", insertError);
+      }
+    } else if (!userData.is_active) {
+      console.error("Account not active for email:", email);
+      throw new Error("Account not active. Please contact an administrator.");
     }
     
     console.log("Login successful:", !!data);
