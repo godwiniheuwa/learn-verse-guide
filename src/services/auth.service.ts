@@ -49,40 +49,73 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
 /**
  * Login with email and password
  */
+// export const loginWithEmail = async (email: string, password: string) => {
+//   try {
+//     console.log("Starting login process for:", email);
+    
+//     const response = await fetch(`${API_URL}/auth/login.php`, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({ email, password }),
+//     });
+    
+//     const data = await response.json();
+    
+//     if (!response.ok) {
+//       console.error('Login error:', data.error);
+//       throw new Error(data.error || "Invalid email or password. Please try again.");
+//     }
+    
+    
+//     if (!data.token) {
+//       console.error("Auth succeeded but no token returned");
+//       throw new Error("Authentication error. Please try again.");
+//     }
+    
+//     // Store token in localStorage
+//     localStorage.setItem('auth_token', data.token);
+    
+//     console.log("Login successful");
+//     return data;
+//   } catch (error: any) {
+//     console.error('Error in loginWithEmail:', error);
+//     throw error;
+//   }
+// };
+
+// src/services/auth.service.ts
+
 export const loginWithEmail = async (email: string, password: string) => {
+  console.log('🌐 API_URL is:', API_URL);        // sanity‐check
+  console.log('👉 calling:', `${API_URL}/auth/login.php`);
+
+  const response = await fetch(`${API_URL}/auth/login.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  // debug raw text so you see HTML if it sneaks through
+  const text = await response.text();
+  let data;
   try {
-    console.log("Starting login process for:", email);
-    
-    const response = await fetch(`${API_URL}/auth/login.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      console.error('Login error:', data.error);
-      throw new Error(data.error || "Invalid email or password. Please try again.");
-    }
-    
-    
-    if (!data.token) {
-      console.error("Auth succeeded but no token returned");
-      throw new Error("Authentication error. Please try again.");
-    }
-    
-    // Store token in localStorage
-    localStorage.setItem('auth_token', data.token);
-    
-    console.log("Login successful");
-    return data;
-  } catch (error: any) {
-    console.error('Error in loginWithEmail:', error);
-    throw error;
+    data = JSON.parse(text);
+  } catch {
+    console.error('Non-JSON response:', text);
+    throw new Error('Server did not return valid JSON.');
   }
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Invalid email or password.');
+  }
+  if (!data.token) {
+    throw new Error('Authentication error. No token returned.');
+  }
+
+  localStorage.setItem('auth_token', data.token);
+  return data;
 };
 
 /**
