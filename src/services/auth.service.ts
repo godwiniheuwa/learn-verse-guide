@@ -5,6 +5,7 @@ import { API_URL } from '@/config';
 /**
  * Fetch user data from the database
  */
+console.log('🌐 API_URL is:', API_URL);
 export const fetchUserData = async (userId: string): Promise<User | null> => {
   try {
     console.log("Fetching user data for ID:", userId);
@@ -66,6 +67,7 @@ export const loginWithEmail = async (email: string, password: string) => {
       console.error('Login error:', data.error);
       throw new Error(data.error || "Invalid email or password. Please try again.");
     }
+    
     
     if (!data.token) {
       console.error("Auth succeeded but no token returned");
