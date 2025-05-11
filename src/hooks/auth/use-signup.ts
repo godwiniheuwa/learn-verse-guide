@@ -1,11 +1,6 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-
-// Use these constants instead of accessing protected properties
-const SUPABASE_URL = "https://lemshjwutppclhhboeae.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbXNoand1dHBwY2xoaGJvZWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjI4ODEsImV4cCI6MjA2MjM5ODg4MX0.xslVb5AhvLEBJ8JrSAbANErkzqiWxfUdXni0iICdorA";
+import { API_URL } from '@/config'; // Import API_URL from your config
 
 export const useSignup = () => {
   const { toast } = useToast();
@@ -14,11 +9,10 @@ export const useSignup = () => {
   const signup = async (name: string, email: string, username: string, password: string) => {
     try {
       setAuthError(null);
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth/signup`, {
+      const response = await fetch(`${API_URL}/auth/signup.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({ name, email, username, password }),
       });

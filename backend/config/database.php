@@ -1,11 +1,12 @@
 
 <?php
 // Database configuration
+
 class Database {
     private $host = "localhost";
     private $db_name = "examprep_db";
-    private $username = "examprep_user";
-    private $password = "your_password"; // Change this in production
+    private $username = "root";
+    private $password = ""; // Change this in production
     public $conn;
 
     // Get database connection

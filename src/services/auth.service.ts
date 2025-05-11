@@ -1,6 +1,10 @@
 import { User } from '@/types/auth';
 import { API_URL } from '@/config';
 
+
+console.log('🌐 API URL is:', API_URL);
+console.log('📡 Calling:  nw ', `${API_URL}/auth/login.php`);
+
 /**
  * Fetch user data from the database
  */
@@ -60,12 +64,16 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
  * Login with email and password
  */
 export const loginWithEmail = async (email: string, password: string) => {
+  console.log('🔒 Login attempt for:', email);
+  console.log('🌐 API URL is:', API_URL);
+  console.log('📡 Calling:  nw ', `${API_URL}/auth/login.php`);
   try {
     console.log('🔒 Login attempt for:', email);
     console.log('🌐 API URL is:', API_URL);
     console.log('📡 Calling:', `${API_URL}/auth/login.php`);
 
-    const response = await fetch(`${API_URL}/auth/login.php`, {
+    // const response = await fetch(`${API_URL}/auth/login.php`, {
+    const response = await fetch(`http://localhost:8080/backend/api/auth/login.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -104,7 +112,7 @@ export const loginWithEmail = async (email: string, password: string) => {
  */
 export const signupWithEmail = async (name: string, email: string, username: string, password: string) => {
   try {
-    const response = await fetch(`${API_URL}/auth/signup`, {
+    const response = await fetch(`${API_URL}/auth/signup.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
