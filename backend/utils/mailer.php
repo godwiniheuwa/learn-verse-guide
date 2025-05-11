@@ -1,52 +1,194 @@
 
 <?php
 class Mailer {
-    // Send email using PHP mail function
+    /**
+     * Send an email
+     * 
+     * @param string $to Recipient email
+     * @param string $subject Email subject
+     * @param string $htmlMessage HTML message body
+     * @return bool Success or failure
+     */
     public static function sendMail($to, $subject, $htmlMessage) {
-        // Set content type header for HTML email
-        $headers = "MIME-Version: 1.0" . "\r\n";
-        $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-        $headers .= "From: ExamPrep <noreply@examprep.com>" . "\r\n";
-
-        // Attempt to send email
-        return mail($to, $subject, $htmlMessage, $headers);
+        // In a real implementation, you would use PHPMailer, mail() function, 
+        // or an API service like SendGrid, Mailgun, etc.
+        
+        // For now, we'll just log the email (for development purposes)
+        $logDir = __DIR__ . "/../../logs";
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        
+        $logFile = $logDir . "/email_log.txt";
+        $timestamp = date('Y-m-d H:i:s');
+        $logMessage = "[$timestamp] To: $to | Subject: $subject | Body: " . substr(strip_tags($htmlMessage), 0, 100) . "...\n";
+        
+        file_put_contents($logFile, $logMessage, FILE_APPEND);
+        
+        // For development, we'll consider it a success
+        // In production, you would return the success/failure of your email sending method
+        return true;
     }
-
-    // Generate activation email content
-    public static function generateActivationEmail($name, $activationUrl) {
+    
+    /**
+     * Generate account activation email content
+     * 
+     * @param string $userName Recipient's name
+     * @param string $activationUrl Activation URL
+     * @return string HTML email content
+     */
+    public static function generateActivationEmail($userName, $activationUrl) {
         return '
-            <h1>Activate your ExamPrep account</h1>
-            <p>Hello ' . $name . ',</p>
-            <p>Thank you for signing up for ExamPrep. Please click the button below to activate your account:</p>
-            <p>
-              <a href="' . $activationUrl . '" style="display:inline-block; background-color:#4F46E5; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">
-                Activate Account
-              </a>
-            </p>
-            <p>Or copy and paste this URL into your browser:</p>
-            <p>' . $activationUrl . '</p>
-            <p>This link will expire in 24 hours.</p>
-            <p>If you did not create an account, please ignore this email.</p>
-            <p>Best regards,<br>The ExamPrep Team</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Activate Your ExamPrep Account</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    width: 100%;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    padding: 20px;
+                }
+                .header {
+                    background-color: #4f46e5;
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                }
+                .content {
+                    padding: 20px;
+                    line-height: 1.5;
+                }
+                .button {
+                    display: inline-block;
+                    padding: 10px 20px;
+                    background-color: #4f46e5;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                }
+                .footer {
+                    margin-top: 20px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Welcome to ExamPrep!</h1>
+                </div>
+                <div class="content">
+                    <p>Hello ' . htmlspecialchars($userName) . ',</p>
+                    <p>Thank you for signing up with ExamPrep! To activate your account, please click the button below:</p>
+                    <p style="text-align: center;">
+                        <a href="' . htmlspecialchars($activationUrl) . '" class="button">Activate Your Account</a>
+                    </p>
+                    <p>If the button above doesn\'t work, you can also copy and paste the following link into your browser:</p>
+                    <p>' . htmlspecialchars($activationUrl) . '</p>
+                    <p>This link will expire in 24 hours for security reasons.</p>
+                    <p>If you didn\'t create an account with us, please ignore this email.</p>
+                    <p>Best regards,<br>The ExamPrep Team</p>
+                </div>
+                <div class="footer">
+                    <p>© ' . date('Y') . ' ExamPrep. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
         ';
     }
-
-    // Generate password reset email content
-    public static function generateResetPasswordEmail($name, $resetUrl) {
+    
+    /**
+     * Generate password reset email content
+     * 
+     * @param string $userName Recipient's name
+     * @param string $resetUrl Password reset URL
+     * @return string HTML email content
+     */
+    public static function generatePasswordResetEmail($userName, $resetUrl) {
         return '
-            <h1>Reset your ExamPrep password</h1>
-            <p>Hello ' . $name . ',</p>
-            <p>We received a request to reset your password. Please click the button below to set a new password:</p>
-            <p>
-              <a href="' . $resetUrl . '" style="display:inline-block; background-color:#4F46E5; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">
-                Reset Password
-              </a>
-            </p>
-            <p>Or copy and paste this URL into your browser:</p>
-            <p>' . $resetUrl . '</p>
-            <p>This link will expire in 1 hour.</p>
-            <p>If you did not request a password reset, please ignore this email.</p>
-            <p>Best regards,<br>The ExamPrep Team</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Reset Your ExamPrep Password</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    width: 100%;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    padding: 20px;
+                }
+                .header {
+                    background-color: #4f46e5;
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                }
+                .content {
+                    padding: 20px;
+                    line-height: 1.5;
+                }
+                .button {
+                    display: inline-block;
+                    padding: 10px 20px;
+                    background-color: #4f46e5;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                }
+                .footer {
+                    margin-top: 20px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Password Reset Request</h1>
+                </div>
+                <div class="content">
+                    <p>Hello ' . htmlspecialchars($userName) . ',</p>
+                    <p>We received a request to reset your ExamPrep password. If you made this request, please click the button below to set a new password:</p>
+                    <p style="text-align: center;">
+                        <a href="' . htmlspecialchars($resetUrl) . '" class="button">Reset Your Password</a>
+                    </p>
+                    <p>If the button above doesn\'t work, you can also copy and paste the following link into your browser:</p>
+                    <p>' . htmlspecialchars($resetUrl) . '</p>
+                    <p>This link will expire in 1 hour for security reasons.</p>
+                    <p>If you didn\'t request a password reset, please ignore this email. Your account is secure.</p>
+                    <p>Best regards,<br>The ExamPrep Team</p>
+                </div>
+                <div class="footer">
+                    <p>© ' . date('Y') . ' ExamPrep. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
         ';
     }
 }
