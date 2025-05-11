@@ -1,220 +1,219 @@
 
-import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Outlet, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Home, Users, BookOpen, FileText, Settings, 
-  LogOut, Menu, X, ChevronRight, ChevronDown
+  Home, 
+  BookOpen, 
+  FileQuestion, 
+  Settings, 
+  Users, 
+  LogOut, 
+  Menu, 
+  X,
+  BarChart,
+  FileText,
+  Clock,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { APP_NAME } from '@/config';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { useMediaQuery } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
 
-export const AdminLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+type NavItem = {
+  label: string;
+  path: string;
+  icon: React.ReactNode;
+};
+
+const AdminLayout = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useMediaQuery('(max-width: 1024px)');
   
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
-      if (mobile) setSidebarOpen(false);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  // Close sidebar on mobile when route changes
-  useEffect(() => {
+  // Auto-close sidebar on mobile
+  React.useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  }, [isMobile]);
+
+  // Close sidebar when route changes on mobile
+  React.useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [location.pathname, isMobile]);
+
+  const navItems: NavItem[] = [
+    { label: 'Dashboard', path: '/admin/dashboard', icon: <Home className="w-5 h-5" /> },
+    { label: 'Questions', path: '/admin/questions', icon: <FileQuestion className="w-5 h-5" /> },
+    { label: 'Exams', path: '/admin/exams', icon: <BookOpen className="w-5 h-5" /> },
+    { label: 'Users', path: '/admin/users', icon: <Users className="w-5 h-5" /> },
+    { label: 'Reports', path: '/admin/reports', icon: <BarChart className="w-5 h-5" /> },
+    { label: 'Documents', path: '/admin/documents', icon: <FileText className="w-5 h-5" /> },
+    { label: 'Settings', path: '/admin/settings', icon: <Settings className="w-5 h-5" /> },
+  ];
   
-  const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => {
-    const isActive = location.pathname === to;
-    
-    return (
-      <NavLink 
-        to={to}
-        className={`flex items-center p-2 rounded-lg transition-all duration-200 ${
-          isActive 
-            ? 'bg-primary text-primary-foreground font-medium' 
-            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-        }`}
-      >
-        <Icon className={`h-5 w-5 ${sidebarOpen ? 'mr-3' : ''}`} />
-        {sidebarOpen && <span>{label}</span>}
-      </NavLink>
-    );
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
   };
-  
-  const NavGroup = ({ 
-    label, 
-    icon: Icon, 
-    children 
-  }: { 
-    label: string; 
-    icon: any; 
-    children: React.ReactNode 
-  }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    
-    return (
-      <div className="py-1">
-        <button
-          className="flex items-center justify-between w-full p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <div className="flex items-center">
-            <Icon className={`h-5 w-5 ${sidebarOpen ? 'mr-3' : ''}`} />
-            {sidebarOpen && <span>{label}</span>}
-          </div>
-          {sidebarOpen && (
-            isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-          )}
-        </button>
-        
-        {sidebarOpen && (
-          <AnimatePresence>
-            {isOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="pl-10 overflow-hidden"
-              >
-                {children}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
-      </div>
-    );
-  };
-  
+
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      {/* Sidebar overlay for mobile */}
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div 
-          className="fixed inset-0 z-20 bg-black/50 transition-opacity duration-200"
+          className="fixed inset-0 bg-black/50 z-20"
           onClick={() => setSidebarOpen(false)}
         />
       )}
       
       {/* Sidebar */}
       <AnimatePresence>
-        {(sidebarOpen || !isMobile) && (
+        {sidebarOpen && (
           <motion.aside
-            initial={isMobile ? { x: -280 } : false}
+            initial={{ x: -280 }}
             animate={{ x: 0 }}
-            exit={isMobile ? { x: -280 } : false}
-            transition={{ duration: 0.2 }}
-            className={`${
-              sidebarOpen ? 'w-64' : 'w-16'
-            } bg-card shadow-md z-30 flex flex-col ${
-              isMobile ? 'fixed h-full' : 'relative'
-            }`}
+            exit={{ x: -280 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className={`fixed z-30 lg:relative w-64 h-screen bg-white border-r border-gray-200 shadow-md`}
           >
-            {/* Sidebar Header */}
-            <div className="flex justify-between items-center p-4 border-b">
-              {sidebarOpen && <h1 className="text-xl font-bold">{APP_NAME}</h1>}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="hover:bg-muted"
-              >
-                {sidebarOpen ? <X /> : <Menu />}
-              </Button>
-            </div>
-            
-            {/* Sidebar Navigation */}
-            <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-              <NavItem to="/admin" icon={Home} label="Dashboard" />
-              
-              <NavGroup icon={Users} label="Users">
-                <NavItem to="/admin/users" icon={Users} label="All Users" />
-                <NavItem to="/admin/users/new" icon={Users} label="Add User" />
-              </NavGroup>
-              
-              <NavGroup icon={BookOpen} label="Exams">
-                <NavItem to="/admin/exams" icon={BookOpen} label="All Exams" />
-                <NavItem to="/admin/exams/new" icon={BookOpen} label="Create Exam" />
-              </NavGroup>
-              
-              <NavGroup icon={FileText} label="Questions">
-                <NavItem to="/admin/questions" icon={FileText} label="All Questions" />
-                <NavItem to="/admin/questions/new" icon={FileText} label="Add Question" />
-              </NavGroup>
-              
-              <NavItem to="/admin/settings" icon={Settings} label="Settings" />
-            </nav>
-            
-            {/* Sidebar Footer */}
-            <div className={`p-4 border-t ${sidebarOpen ? '' : 'flex justify-center'}`}>
-              {sidebarOpen ? (
-                <div className="flex flex-col">
-                  <div className="text-sm font-semibold">{user?.name}</div>
-                  <div className="text-xs text-muted-foreground">{user?.role}</div>
-                  <Button 
-                    variant="ghost" 
-                    className="mt-2 flex justify-start px-2 text-muted-foreground hover:text-destructive"
-                    onClick={() => logout()}
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </Button>
+            <div className="flex flex-col h-full">
+              {/* Sidebar Header */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <div className="flex items-center space-x-2">
+                  <div className="bg-primary/90 text-white rounded-md p-1.5">
+                    <BookOpen className="w-6 h-6" />
+                  </div>
+                  <h1 className="text-xl font-bold text-gray-800">ExamPrep</h1>
                 </div>
-              ) : (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => logout()}
+                {isMobile && (
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={() => setSidebarOpen(false)}
+                    className="lg:hidden"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                )}
+              </div>
+              
+              {/* User Profile */}
+              <div className="p-4 border-b">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-10 w-10 border border-gray-200">
+                    <AvatarImage src="/avatar-placeholder.png" alt={user?.name || 'User'} />
+                    <AvatarFallback>{user?.name ? getInitials(user.name) : 'U'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'Admin User'}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email || 'admin@examprep.com'}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Navigation Links */}
+              <nav className="flex-1 p-4 overflow-y-auto">
+                <div className="space-y-1">
+                  {navItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center px-3 py-2.5 text-sm rounded-md transition-colors group ${
+                          isActive
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <span className={`mr-3 ${isActive ? 'text-primary' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                          {item.icon}
+                        </span>
+                        <motion.span
+                          initial={false}
+                          animate={isActive ? { x: 2 } : { x: 0 }}
+                        >
+                          {item.label}
+                        </motion.span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </nav>
+              
+              {/* Sidebar Footer */}
+              <div className="p-4 border-t mt-auto">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-gray-700"
+                  onClick={logout}
                 >
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
                 </Button>
-              )}
+              </div>
             </div>
           </motion.aside>
         )}
       </AnimatePresence>
       
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Top Bar */}
-        <header className="bg-card shadow-sm p-4 flex justify-between items-center z-10">
-          {(!sidebarOpen || isMobile) && (
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Top Navigation */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="flex items-center justify-between px-4 py-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="hover:bg-muted mr-2"
+              className="text-gray-600 hover:text-gray-900"
             >
-              <Menu />
+              <Menu className="w-5 h-5" />
             </Button>
-          )}
-          <div className="text-lg font-semibold">
-            Admin Panel
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium hidden md:inline-block">
-              {user?.name}
-            </span>
+            
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+              </Button>
+              
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900">
+                <Clock className="w-5 h-5" />
+              </Button>
+              
+              <Separator orientation="vertical" className="h-6" />
+              
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">Today</p>
+                <p className="text-xs text-gray-500">
+                  {new Date().toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+            </div>
           </div>
         </header>
         
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

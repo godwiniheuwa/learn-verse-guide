@@ -1,15 +1,18 @@
 
-// // API configuration
-// const API_BASE_URL = process.env.NODE_ENV === 'production' 
-//   ? '/api' // Production path (relative to domain root)
-//   : '/api'; // Development path
+// API configuration
+// This should point to your actual PHP host once deployed
+// For local development, you might need to use a different URL
 
+// During development, you can use a local PHP server or a remote development server
+const DEV_API_URL = 'https://yourdomain.com/backend/api';  // Replace with your actual PHP server URL
 
-const API_BASE_URL =
-  /* e.g. https://preview-foo.lovable.app */ window.location.origin +
-  /* path to where your PHP scripts live */ '/backend/api';
+// In production, use your production PHP server
+const PROD_API_URL = 'https://yourdomain.com/backend/api'; // Replace with your production PHP server URL
 
-export const API_URL = API_BASE_URL;
+export const API_URL = process.env.NODE_ENV === 'production' ? PROD_API_URL : DEV_API_URL;
+
+// For testing/development with a mock API
+export const USE_MOCK_API = false; // Set to true to use mock data instead of real API calls
 
 export const APP_NAME = 'ExamPrep';
 export const APP_VERSION = '1.0.0';

@@ -1,14 +1,13 @@
-
 import { User } from '@/types/auth';
 import { API_URL } from '@/config';
 
 /**
  * Fetch user data from the database
  */
-console.log('🌐 API_URL is:', API_URL);
 export const fetchUserData = async (userId: string): Promise<User | null> => {
   try {
     console.log("Fetching user data for ID:", userId);
+    console.log("Using API URL:", API_URL);
     
     const token = localStorage.getItem('auth_token');
     if (!token) {
@@ -16,7 +15,7 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
       return null;
     }
     
-    const response = await fetch(`${API_URL}/user/get`, {
+    const response = await fetch(`${API_URL}/user/get.php`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -25,21 +24,32 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
     });
     
     if (!response.ok) {
-      console.error('Error fetching user data:', response.statusText);
+      const errorText = await response.text();
+      console.error('Error fetching user data:', response.status, errorText);
       return null;
     }
     
-    const userData = await response.json();
-    console.log("User data found:", userData);
+    // Debug: Log the raw response to see what's coming back
+    const rawText = await response.text();
+    console.log("Raw user data response:", rawText);
+    
+    try {
+      // Parse the text back to JSON
+      const userData = JSON.parse(rawText);
+      console.log("User data found:", userData);
 
-    return {
-      id: userData.id,
-      email: userData.email,
-      name: userData.name,
-      username: userData.username,
-      role: userData.role,
-      isActive: userData.isActive
-    };
+      return {
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        username: userData.username,
+        role: userData.role,
+        isActive: userData.isActive
+      };
+    } catch (jsonError) {
+      console.error("Failed to parse user data JSON:", jsonError);
+      return null;
+    }
   } catch (error) {
     console.error('Error fetching user data:', error);
     return null;
@@ -49,73 +59,44 @@ export const fetchUserData = async (userId: string): Promise<User | null> => {
 /**
  * Login with email and password
  */
-// export const loginWithEmail = async (email: string, password: string) => {
-//   try {
-//     console.log("Starting login process for:", email);
-    
-//     const response = await fetch(`${API_URL}/auth/login.php`, {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//       body: JSON.stringify({ email, password }),
-//     });
-    
-//     const data = await response.json();
-    
-//     if (!response.ok) {
-//       console.error('Login error:', data.error);
-//       throw new Error(data.error || "Invalid email or password. Please try again.");
-//     }
-    
-    
-//     if (!data.token) {
-//       console.error("Auth succeeded but no token returned");
-//       throw new Error("Authentication error. Please try again.");
-//     }
-    
-//     // Store token in localStorage
-//     localStorage.setItem('auth_token', data.token);
-    
-//     console.log("Login successful");
-//     return data;
-//   } catch (error: any) {
-//     console.error('Error in loginWithEmail:', error);
-//     throw error;
-//   }
-// };
-
-// src/services/auth.service.ts
-
 export const loginWithEmail = async (email: string, password: string) => {
-  console.log('🌐 API_URL is:', API_URL);        // sanity‐check
-  console.log('👉 calling:', `${API_URL}/auth/login.php`);
-
-  const response = await fetch(`${API_URL}/auth/login.php`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-
-  // debug raw text so you see HTML if it sneaks through
-  const text = await response.text();
-  let data;
   try {
-    data = JSON.parse(text);
-  } catch {
-    console.error('Non-JSON response:', text);
-    throw new Error('Server did not return valid JSON.');
-  }
+    console.log('🔒 Login attempt for:', email);
+    console.log('🌐 API URL is:', API_URL);
+    console.log('📡 Calling:', `${API_URL}/auth/login.php`);
 
-  if (!response.ok) {
-    throw new Error(data.error || 'Invalid email or password.');
-  }
-  if (!data.token) {
-    throw new Error('Authentication error. No token returned.');
-  }
+    const response = await fetch(`${API_URL}/auth/login.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-  localStorage.setItem('auth_token', data.token);
-  return data;
+    // Debug raw response
+    const text = await response.text();
+    console.log("Raw login response:", text);
+    
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (jsonError) {
+      console.error('Non-JSON response:', text);
+      throw new Error('Server returned invalid JSON. This might indicate the PHP backend is not properly set up or not running.');
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed. Please check your credentials.');
+    }
+    
+    if (!data.token) {
+      throw new Error('Authentication error. No token returned from server.');
+    }
+
+    localStorage.setItem('auth_token', data.token);
+    return data;
+  } catch (error: any) {
+    console.error('Error in loginWithEmail:', error);
+    throw error;
+  }
 };
 
 /**
