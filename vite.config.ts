@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     proxy: {
-      '/api': {
+      '/backend/api': {
         target: 'http://localhost', // Local PHP server
         changeOrigin: true,
       },

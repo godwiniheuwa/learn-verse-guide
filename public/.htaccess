@@ -8,3 +8,15 @@
   RewriteCond %{REQUEST_URI} !^/backend
   RewriteRule . /index.html [L]
 </IfModule>
+
+# Enable CORS
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+</IfModule>
+
+# Set correct MIME types
+AddType application/javascript .js
+AddType application/json .json
+AddType text/css .css

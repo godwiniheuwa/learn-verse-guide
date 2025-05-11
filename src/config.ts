@@ -4,10 +4,10 @@
 // For local development, you might need to use a different URL
 
 // During development, you can use a local PHP server or a remote development server
-const DEV_API_URL = 'https://yourdomain.com/backend/api';  // Replace with your actual PHP server URL
+const DEV_API_URL = 'http://localhost:8080/backend/api';  // Replace with your local development PHP server URL
 
-// In production, use your production PHP server
-const PROD_API_URL = 'https://yourdomain.com/backend/api'; // Replace with your production PHP server URL
+// In production, use your Hostinger PHP server domain
+const PROD_API_URL = 'https://yourdomain.com/backend/api'; // Replace with your actual domain on Hostinger
 
 export const API_URL = process.env.NODE_ENV === 'production' ? PROD_API_URL : DEV_API_URL;
 
