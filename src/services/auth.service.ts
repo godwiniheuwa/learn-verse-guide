@@ -52,7 +52,7 @@ export const loginWithEmail = async (email: string, password: string) => {
   try {
     console.log("Starting login process for:", email);
     
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/auth/login.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
